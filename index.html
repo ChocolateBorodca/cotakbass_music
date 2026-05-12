@@ -4,101 +4,139 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
-    <!-- ПОДКЛЮЧАЕМ БИБЛИОТЕКУ ЧЕРЕЗ СКРИПТ-ЗЕРКАЛО (НЕ ЗАБЛОКИРОВАНО) -->
-    <script src="https://jsdelivr.net"></script>
+    <!-- ПОДКЛЮЧАЕМ ТВОЙ ФАЙЛ С МОЗГАМИ БАЗЫ -->
+    <script src="supabase.js"></script>
     <style>
-        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); }
-        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; }
-        .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); text-align: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; }
-        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-transform: lowercase; }
+        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
+        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; overflow-x: hidden; }
+        
+        /* ФОН */
+        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.3; }
+        .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7), #000); z-index: -1; }
+
+        /* НАВИГАЦИЯ */
+        .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); backdrop-filter: var(--blur); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; }
+        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 10px var(--neon); text-transform: lowercase; }
+
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 20px; }
-        audio { width: 100%; height: 35px; margin-top: 10px; filter: invert(1); }
-        .fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; border: none; z-index: 5000; }
-        .modal { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; padding: 40px 25px; z-index: 6000; }
+        
+        /* КАРТОЧКА ТРЕКА */
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); animation: slideUp 0.5s ease; }
+        .card h3 { margin: 0 0 8px 0; font-size: 20px; font-weight: 800; }
+        .card .user-tag { font-size: 11px; color: var(--neon); opacity: 0.7; text-transform: uppercase; margin-bottom: 15px; display: block; }
+        
+        audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1) hue-rotate(180deg) opacity(0.8); }
+
+        /* КНОПКА + */
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; box-shadow: 0 0 30px rgba(160, 32, 240, 0.4); z-index: 2000; border: none; }
+
+        /* МОДАЛКА */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: none; flex-direction: column; padding: 60px 25px; z-index: 3000; backdrop-filter: blur(20px); }
         .modal.active { display: flex; }
-        input { background: #111; border: 1px solid #333; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; outline: none; width: 100%; box-sizing: border-box; }
-        .btn-post { background: var(--neon); color: white; padding: 18px; border-radius: 12px; text-align: center; font-weight: 800; cursor: pointer; border: none; width: 100%; }
-        .file-label { display: block; background: #222; border: 1px dashed #444; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 15px; cursor: pointer; font-size: 13px; }
-        #loader { display: none; text-align: center; padding: 20px; color: var(--neon); font-weight: bold; }
+        
+        input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 18px; color: white; margin-bottom: 12px; outline: none; font-size: 16px; display: block; text-align: center; cursor: pointer; width: 100%; box-sizing: border-box; }
+        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; width: 100%; transition: 0.3s; }
+        .btn-post:disabled { background: #222; color: #555; cursor: not-allowed; box-shadow: none; }
+        
+        /* ЛОАДЕР */
+        #loader { display: none; text-align: center; margin-top: 20px; color: var(--neon); font-weight: 700; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div class="nav"><div class="logo">cotakbass</div></div>
-    <div class="container" id="feed"></div>
-    <button class="fab" onclick="document.getElementById('modal').classList.add('active')">+</button>
+    <img id="bg-gif" src="https://giphy.com">
+    <div class="overlay"></div>
 
-    <div class="modal" id="modal">
-        <h2 style="text-align:center">опубликовать</h2>
-        <input type="text" id="tTitle" placeholder="название трека">
-        <input type="text" id="uName" placeholder="твой ник">
+    <div class="nav"><div class="logo">cotakbass</div></div>
+
+    <div class="container" id="feed">
+        <p style="text-align:center; opacity:0.3; margin-top:50px;">подключаемся к облаку...</p>
+    </div>
+
+    <button class="fab" onclick="toggleModal()">+</button>
+
+    <div class="modal" id="postModal">
+        <h2 style="text-align: center; margin-bottom: 30px;">Опубликовать</h2>
+        <input type="text" id="trackTitle" placeholder="Название трека">
+        <input type="text" id="userName" placeholder="Твой ник">
         
-        <label class="file-label" for="fInp" id="fStatus">ВЫБРАТЬ MP3 ФАЙЛ</label>
-        <input type="file" id="fInp" accept="audio/*" style="display:none">
+        <label class="file-label" for="fileInput" id="fileStatus">Выбрать файл (.mp3)</label>
+        <input type="file" id="fileInput" accept="audio/mpeg" style="display: none;" onchange="updateFileName()">
         
-        <button class="btn-post" id="upBtn" onclick="handleStart()">опубликовать</button>
-        <div id="loader">ОТПРАВКА В ОБЛАКО...</div>
-        <p onclick="document.getElementById('modal').classList.remove('active')" style="text-align:center; opacity:0.4; margin-top:20px; cursor:pointer">отмена</p>
+        <button class="btn-post" id="upBtn" onclick="handleUpload()" disabled>ЖДЕМ СОЕДИНЕНИЯ...</button>
+        
+        <div id="loader">ТРЕК ЛЕТИТ В ОБЛАКО...</div>
+
+        <p onclick="toggleModal()" id="cancelBtn" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
     <script>
-        const S_URL = "https://supabase.co";
-        const S_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; 
+        const SUPABASE_URL = "https://supabase.co";
+        const SUPABASE_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; 
         let sb = null;
 
-        // Инициализация при загрузке
-        window.addEventListener('DOMContentLoaded', () => {
+        // 1. ПРОВЕРКА ПОДКЛЮЧЕНИЯ
+        const checkBase = setInterval(() => {
             if (typeof supabase !== 'undefined') {
-                sb = supabase.createClient(S_URL, S_KEY);
+                sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                document.getElementById('upBtn').innerText = "Опубликовать";
+                document.getElementById('upBtn').disabled = false;
                 loadFeed();
-            } else {
-                alert("Ошибка загрузки модуля базы. Попробуй обновить страницу.");
+                clearInterval(checkBase);
             }
-        });
+        }, 1000);
 
-        document.getElementById('fInp').onchange = function() {
-            if(this.files[0]) document.getElementById('fStatus').innerText = "ВЫБРАН: " + this.files[0].name;
-        };
-
-        async function loadFeed() {
-            const { data } = await sb.from('posts').select('*').order('id', { ascending: false });
-            if (data) {
-                const feed = document.getElementById('feed');
-                feed.innerHTML = "";
-                data.forEach(item => {
-                    feed.innerHTML += `<div class="card"><small style="color:var(--neon)">By: ${item.author}</small><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
-                });
-            }
+        function toggleModal() { document.getElementById('postModal').classList.toggle('active'); }
+        
+        function updateFileName() {
+            const f = document.getElementById('fileInput').files[0];
+            if(f) document.getElementById('fileStatus').innerText = "Выбрано: " + f.name.substring(0, 15) + "...";
         }
 
-        async function handleStart() {
-            const t = document.getElementById('tTitle').value;
-            const u = document.getElementById('uName').value;
-            const fileInput = document.getElementById('fInp');
-            
-            if (!t || !u || !fileInput.files[0]) return alert("Заполни все поля!");
-            if (!sb) return alert("База еще не готова!");
+        async function loadFeed() {
+            try {
+                const { data, error } = await sb.from('posts').select('*').order('id', { ascending: false });
+                const feed = document.getElementById('feed');
+                feed.innerHTML = "";
+                if (data) {
+                    data.forEach(item => {
+                        feed.innerHTML += `<div class="card"><span class="user-tag">By: ${item.author}</span><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
+                    });
+                }
+            } catch (e) { console.log("Feed error"); }
+        }
 
-            document.getElementById('upBtn').style.display = 'none';
+        async function handleUpload() {
+            const title = document.getElementById('trackTitle').value;
+            const author = document.getElementById('userName').value;
+            const file = document.getElementById('fileInput').files[0];
+
+            if (!title || !author || !file) return alert("Заполни всё!");
+
             document.getElementById('loader').style.display = 'block';
+            document.getElementById('upBtn').style.display = 'none';
 
             try {
-                const file = fileInput.files[0];
-                const fileName = Date.now() + "_" + file.name.replace(/[^a-z0-9.]/gi, '_');
+                const fName = `${Date.now()}_track.mp3`;
                 
-                const { error: upErr } = await sb.storage.from('music').upload(fileName, file);
+                // ЗАГРУЗКА В ХРАНИЛИЩЕ
+                const { error: upErr } = await sb.storage.from('music').upload(fName, file);
                 if (upErr) throw upErr;
 
-                const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fileName);
-                const { error: dbErr } = await sb.from('posts').insert([{ title: t, author: u, link: publicUrl }]);
+                // ПОЛУЧЕНИЕ ССЫЛКИ
+                const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fName);
+                
+                // ЗАПИСЬ В ТАБЛИЦУ
+                const { error: dbErr } = await sb.from('posts').insert([{ title, author, link: publicUrl }]);
                 if (dbErr) throw dbErr;
 
                 location.reload();
-            } catch (e) {
-                alert("Ошибка: " + e.message);
-                document.getElementById('upBtn').style.display = 'block';
+            } catch (err) {
+                alert("Ошибка: " + err.message);
                 document.getElementById('loader').style.display = 'none';
+                document.getElementById('upBtn').style.display = 'block';
             }
         }
     </script>
