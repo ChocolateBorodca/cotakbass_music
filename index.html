@@ -20,7 +20,7 @@
             height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent;
         }
 
-        /* GIF ФОН ИЗ ГИТХАБА */
+        /* GIF ФОН */
         #bg-gif {
             position: fixed; inset: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: -2; opacity: 0.5; transition: opacity 1.5s ease;
@@ -54,14 +54,13 @@
         }
         .screen.active { display: flex; }
 
-        /* ПЛЕЕР (ТЕКСТ СЛЕВА) */
+        /* ПЛЕЕР */
         .player-content { text-align: left; margin-top: 15vh; padding-left: 5%; }
         .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; min-height: 100px; }
         .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; opacity: 0.8; }
         .controls { display: flex; gap: 20px; }
         .controls .btn { width: 65px; height: 65px; font-size: 24px; }
 
-        /* СКРЫТЫЙ ПЛЕЕР SC */
         #sc-player { position: absolute; top: -5000px; visibility: hidden; }
 
         /* ПОИСК */
@@ -71,17 +70,16 @@
             display: flex; align-items: center; position: relative;
         }
         .search-box input { background: none; border: none; color: white; width: 85%; font-size: 18px; outline: none; }
-        .search-confirm { color: var(--neon); font-weight: 900; font-size: 22px; position: absolute; right: 20px; }
 
+        /* СПИСКИ */
         .list { margin-top: 20px; overflow-y: auto; flex-grow: 1; }
         .item { padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
 
-        /* ПРОФИЛЬ (КРУГ В ЦЕНТРЕ) */
-        .profile-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        /* ПРОФИЛЬ */
         .profile-circle {
             width: 180px; height: 180px; border-radius: 50%;
             border: 2px solid var(--neon); background: var(--glass);
-            display: flex; justify-content: center; align-items: center;
+            margin: 15vh auto 0; display: flex; justify-content: center; align-items: center;
             overflow: hidden; box-shadow: 0 0 30px rgba(160, 32, 240, 0.2); position: relative;
         }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
@@ -94,14 +92,14 @@
 
     <div class="nav">
         <div class="btn" onclick="toggleScreen('lib-screen')">☰</div>
-        <div class="logo-neon">cotakbass</div>
+        <div class="logo-center">cotakbass</div>
         <div style="display: flex; gap: 10px;">
             <div class="btn" id="nav-prof" onclick="toggleScreen('prof-screen')">👤</div>
             <div class="btn" onclick="toggleScreen('search-screen')">?</div>
         </div>
     </div>
 
-    <!-- ТВОЙ ПЛЕЙЛИСТ ИЗ ССЫЛКИ -->
+    <!-- ВИДЖЕТ С ТВОИМ ID -->
     <iframe id="sc-player" src="https://soundcloud.com"></iframe>
 
     <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
@@ -124,24 +122,21 @@
     <div id="search-screen" class="screen">
         <div class="search-box">
             <input type="text" id="search-input" placeholder="напиши хуйню">
-            <div class="search-confirm">?</div>
+            <div style="color:var(--neon); font-weight:900; font-size:22px;">?</div>
         </div>
         <div class="list" id="search-list"></div>
     </div>
 
     <div id="prof-screen" class="screen">
-        <div class="profile-container">
-            <div class="profile-circle" id="prof-upload">
-                <span id="plus" style="font-size:50px; color:var(--neon);">+</span>
-                <img id="ava-img" style="display:none">
-            </div>
+        <div class="profile-circle" id="prof-upload">
+            <span id="plus" style="font-size:50px; color:var(--neon);">+</span>
+            <img id="ava-img" style="display:none">
         </div>
     </div>
 
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
     <script>
-        // ТВОЙ GITHUB (для гифок)
         const USER = "ChocolateBorodca";
         const REPO = "cotakbass_music";
 
@@ -154,18 +149,25 @@
                 const data = await res.json();
                 gifs = data.filter(f => f.name.endsWith('.gif')).map(f => f.download_url);
                 if(gifs.length > 0) changeBg();
-            } catch (e) { console.log("Gifs error"); }
+            } catch (e) { console.log("Gifs missing"); }
         }
 
         function changeBg() {
             if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[Math.floor(Math.random()*gifs.length)];
         }
 
+        // Ждем готовности виджета
         widget.bind(SC.Widget.Events.READY, () => {
+            console.log("SoundCloud Ready");
             widget.getSounds((sounds) => {
                 tracks = sounds;
-                updateUI();
-                renderLists();
+                if (tracks.length > 0) {
+                    updateUI();
+                    renderLists();
+                } else {
+                    document.getElementById('track-title').innerText = "Ошибка ID";
+                    document.getElementById('track-author').innerText = "Плейлист пуст или скрыт";
+                }
             });
         });
 
@@ -181,12 +183,14 @@
 
         function playPause() {
             widget.toggle();
-            isPlaying = !isPlaying;
-            document.getElementById('play-btn').innerText = isPlaying ? "Ⅱ" : "▶";
+            widget.isPaused((paused) => {
+                isPlaying = !paused;
+                document.getElementById('play-btn').innerText = isPlaying ? "Ⅱ" : "▶";
+            });
         }
 
-        function next() { widget.next(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 800); }
-        function prev() { widget.prev(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 800); }
+        function next() { widget.next(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 1000); }
+        function prev() { widget.prev(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 1000); }
 
         function toggleScreen(id) {
             const screen = document.getElementById(id);
@@ -221,7 +225,12 @@
                 const div = document.createElement('div');
                 div.className = 'item';
                 div.innerHTML = `<div>${t.title}</div><div class="btn" style="width:40px; height:40px">▶</div>`;
-                div.onclick = () => { widget.skip(tracks.indexOf(t)); widget.play(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; updateUI(); toggleScreen('search-screen'); };
+                div.onclick = () => { 
+                    const idx = tracks.indexOf(t);
+                    widget.skip(idx); widget.play(); isPlaying = true; 
+                    document.getElementById('play-btn').innerText = "Ⅱ"; updateUI(); 
+                    toggleScreen('search-screen'); 
+                };
                 list.appendChild(div);
             });
         };
@@ -230,11 +239,10 @@
         document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                const img = document.getElementById('ava-img');
-                img.src = ev.target.result; img.style.display = 'block';
+                document.getElementById('ava-img').src = ev.target.result; document.getElementById('ava-img').style.display = 'block';
                 document.getElementById('plus').style.display = 'none';
                 document.getElementById('nav-prof').style.boxShadow = "0 0 15px #A020F0";
-                document.getElementById('nav-prof').style.borderColor = "#A020F0";
+                document.getElementById('nav-prof').style.border = "2px solid #A020F0";
             };
             reader.readAsDataURL(e.target.files);
         };
