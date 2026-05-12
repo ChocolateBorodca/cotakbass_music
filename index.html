@@ -7,57 +7,67 @@
     <style>
         :root {
             --neon: #A020F0;
-            --glass: rgba(255, 255, 255, 0.05);
+            --glass: rgba(255, 255, 255, 0.08);
+            --border: rgba(160, 32, 240, 0.3);
             --blur: blur(45px);
         }
 
         body, html {
             margin: 0; padding: 0; background: #000;
-            color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            color: white; font-family: -apple-system, sans-serif;
             height: 100vh; overflow: hidden;
         }
 
-        /* GIF ФОН */
         #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: -1; }
 
         /* НАВИГАЦИЯ */
         .nav {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000;
+            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 9000;
         }
         .logo-center { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); text-transform: lowercase; position: absolute; left: 50%; transform: translateX(-50%); }
 
         .btn {
             width: 52px; height: 52px; border-radius: 50%;
-            background: var(--glass); backdrop-filter: var(--blur);
-            border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center;
+            background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+            border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: white; transition: 0.3s;
         }
 
-        /* ПЛЕЕР: ТВОЙ ДИЗАЙН (СВЕРХУ) */
-        .player-content { position: relative; z-index: 10; text-align: left; margin-top: 15vh; padding-left: 5%; pointer-events: none; }
-        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; }
-        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; }
-        
-        .controls { display: flex; gap: 20px; pointer-events: auto; }
-        .controls .btn { width: 65px; height: 65px; font-size: 24px; position: relative; }
+        /* КОНТЕНТ ПЛЕЕРА */
+        .player-container {
+            position: relative;
+            margin-top: 20vh;
+            padding-left: 5%;
+            z-index: 100;
+        }
 
-        /* СКРЫТЫЙ ЯНДЕКС (ПОД КНОПКАМИ) */
-        .yandex-wrapper {
+        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; }
+        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; opacity: 0.8; }
+        
+        .controls { display: flex; gap: 20px; position: relative; z-index: 200; }
+        .controls .btn { 
+            width: 65px; height: 65px; font-size: 24px; 
+            border: 1px solid var(--border);
+            box-shadow: 0 0 20px rgba(160, 32, 240, 0.1);
+        }
+
+        /* НЕВИДИМЫЙ ЯНДЕКС - РОВНО ПОД КНОПКАМИ */
+        .yandex-hidden {
             position: absolute;
-            top: 250px; /* Подгони это число под положение своих кнопок */
-            left: 5%;
-            width: 250px; /* Узкая область только для кнопок */
+            top: 0; left: 0;
+            width: 300px; /* Ширина зоны кнопок */
             height: 100px;
-            opacity: 0; /* ПОЛНОСТЬЮ НЕВИДИМ */
-            z-index: 5;
-            transform: scale(2); /* Увеличиваем, чтобы кнопки Яндекса совпали с твоими */
+            opacity: 0.001; /* Почти прозрачный, но кликабельный */
+            z-index: 150;
+            pointer-events: auto;
+            transform: scale(2); /* Растягиваем, чтобы кнопки Яндекса стали большими под твоими */
             transform-origin: top left;
         }
 
         /* ЭКРАНЫ */
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.95); backdrop-filter: var(--blur); z-index: 4000; }
+        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.95); backdrop-filter: var(--blur); z-index: 8000; }
         .screen.active { display: flex; }
 
         .profile-circle { width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); margin: 10vh auto; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 50px; color: var(--neon); }
@@ -78,25 +88,28 @@
         </div>
     </div>
 
-    <!-- ТВОЙ ВИЗУАЛЬНЫЙ ПЛЕЕР -->
-    <div class="player-content">
+    <!-- ТВОЙ ВИЗУАЛЬНЫЙ ИНТЕРФЕЙС -->
+    <div class="player-container">
         <div class="track-title">мрачные треды</div>
         <div class="track-author">тёмный принц</div>
+        
         <div class="controls">
             <div class="btn">❮</div>
-            <div class="btn" style="border-color: var(--neon)">▶</div>
+            <div class="btn" style="border-color: var(--neon); box-shadow: 0 0 25px rgba(160, 32, 240, 0.4);">▶</div>
             <div class="btn">❯</div>
+            
+            <!-- СКРЫТЫЙ ДВИЖОК ЯНДЕКСА ВНУТРИ БЛОКА КНОПОК -->
+            <div class="yandex-hidden">
+                <iframe frameborder="0" style="border:none;width:100%;height:100px;" src="https://yandex.ru"></iframe>
+            </div>
         </div>
-    </div>
-
-    <!-- НЕВИДИМЫЙ ДВИЖОК ЯНДЕКСА -->
-    <div class="yandex-wrapper">
-        <iframe frameborder="0" style="border:none;width:100%;height:100px;" src="https://yandex.ru"></iframe>
     </div>
 
     <div id="prof" class="screen">
         <div class="profile-circle" id="prof-btn">+<img id="ava-img" style="display:none"></div>
     </div>
+
+    <div id="lib" class="screen"><div style="text-align:center; color:var(--neon); letter-spacing:5px;">FAVORITES</div></div>
 
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
