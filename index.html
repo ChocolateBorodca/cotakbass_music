@@ -7,8 +7,7 @@
     <style>
         :root {
             --neon: #A020F0;
-            --glass: rgba(255, 255, 255, 0.08);
-            --border: rgba(160, 32, 240, 0.3);
+            --glass: rgba(255, 255, 255, 0.05);
             --blur: blur(45px);
         }
 
@@ -18,53 +17,56 @@
             height: 100vh; overflow: hidden;
         }
 
-        /* GIF ФОН */
         #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: -1; }
 
         /* НАВИГАЦИЯ */
         .nav {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000;
+            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 9000;
         }
-        .logo-center { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); text-transform: lowercase; position: absolute; left: 50%; transform: translateX(-50%); }
+        .logo-center { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); position: absolute; left: 50%; transform: translateX(-50%); }
 
         .btn {
             width: 52px; height: 52px; border-radius: 50%;
-            background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-            border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+            background: var(--glass); backdrop-filter: var(--blur);
+            border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: white; transition: 0.3s;
         }
 
-        /* ПЛЕЕР */
-        .player-container { margin-top: 18vh; padding-left: 5%; z-index: 100; position: relative; }
-        .album-small { font-size: 14px; color: var(--neon); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px; font-weight: 600; }
-        
-        /* КОНТЕЙНЕР ЯНДЕКСА (МАКСИМАЛЬНО ЧИСТЫЙ) */
-        .yandex-box {
-            width: 90%; max-width: 450px;
-            border-radius: 20px; overflow: hidden;
-            background: var(--glass); border: 1px solid var(--border);
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
-            margin-top: 20px;
+        /* ТВОЙ ДИЗАЙН (ВИЗУАЛ) */
+        .player-content {
+            position: relative;
+            margin-top: 20vh;
+            padding-left: 5%;
+            z-index: 10;
+        }
+
+        .album-label { font-size: 14px; color: var(--neon); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+        .track-title { font-size: 44px; font-weight: 800; letter-spacing: -2px; line-height: 1; margin-bottom: 5px; }
+        .artist-name { font-size: 18px; opacity: 0.6; margin-bottom: 60px; }
+
+        .controls { display: flex; gap: 20px; position: relative; }
+        .controls .btn { width: 65px; height: 65px; font-size: 24px; pointer-events: none; /* Пропускаем клик сквозь кнопку */ }
+
+        /* НЕВИДИМЫЙ ЯНДЕКС (ДВИЖОК ПОД КНОПКАМИ) */
+        .engine-wrap {
+            position: absolute;
+            top: 0; left: 0;
+            width: 300px;
+            height: 100px;
+            opacity: 0; /* Полностью скрыт */
+            z-index: 100;
+            transform: scale(2.2); /* Растягиваем, чтобы кнопки совпали */
+            transform-origin: top left;
         }
 
         /* ЭКРАНЫ */
-        .screen { 
-            position: fixed; inset: 0; display: none; 
-            flex-direction: column; padding: 110px 25px 25px; 
-            background: rgba(0,0,0,0.98); backdrop-filter: var(--blur); z-index: 4000; 
-        }
+        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.98); backdrop-filter: var(--blur); z-index: 8000; }
         .screen.active { display: flex; }
 
-        /* ПРОФИЛЬ КРУГ */
         .profile-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .profile-circle { 
-            width: 180px; height: 180px; border-radius: 50%; 
-            border: 2px solid var(--neon); background: var(--glass); 
-            display: flex; align-items: center; justify-content: center; 
-            overflow: hidden; font-size: 50px; color: var(--neon); cursor: pointer; 
-        }
+        .profile-circle { width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); display: flex; align-items: center; justify-content: center; font-size: 50px; color: var(--neon); overflow: hidden; cursor: pointer; }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
@@ -78,21 +80,30 @@
         <div class="logo-center">cotakbass</div>
         <div style="display: flex; gap: 10px;">
             <div class="btn" onclick="toggleScreen('prof')">👤</div>
-            <div class="btn" onclick="toggleScreen('search')">?</div>
+            <div class="btn">?</div>
         </div>
     </div>
 
-    <!-- ТВОЙ ВИЗУАЛЬНЫЙ ПЛЕЕР -->
-    <div class="player-container">
-        <div class="album-small">мрачные треды</div>
-        
-        <div class="yandex-box">
-            <!-- Плеер Яндекса (высота настроена так, чтобы кнопки были под рукой) -->
-            <iframe frameborder="0" style="border:none;width:100%;height:180px;" width="100%" height="180" src="https://yandex.ru"></iframe>
+    <!-- КОНТЕНТ ПЛЕЕРА -->
+    <div class="player-content">
+        <div class="album-label">мрачные треды</div>
+        <div class="track-title">web 2.0</div> <!-- Сюда впиши название первого трека -->
+        <div class="artist-name">тёмный принц</div>
+
+        <div class="controls">
+            <!-- Твои визуальные кнопки -->
+            <div class="btn">❮</div>
+            <div class="btn" style="border-color: var(--neon); box-shadow: 0 0 30px rgba(160, 32, 240, 0.4);">▶</div>
+            <div class="btn">❯</div>
+
+            <!-- Реальный невидимый Яндекс прямо поверх них -->
+            <div class="engine-wrap">
+                <iframe frameborder="0" style="border:none;width:100%;height:100px;" src="https://yandex.ru"></iframe>
+            </div>
         </div>
     </div>
 
-    <!-- ЭКРАНЫ -->
+    <!-- ЭКРАН ПРОФИЛЯ -->
     <div id="prof" class="screen">
         <div class="profile-container">
             <div class="profile-circle" id="prof-btn">+<img id="ava-img" style="display:none"></div>
@@ -100,16 +111,14 @@
     </div>
 
     <div id="lib" class="screen"><div style="text-align:center; color:var(--neon); letter-spacing:5px;">FAVORITES</div></div>
-    <div id="search" class="screen"><div style="text-align:center; color:var(--neon); letter-spacing:5px;">SEARCH</div></div>
 
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
     <script>
         function toggleScreen(id) {
             const s = document.getElementById(id);
-            if (s.classList.contains('active')) {
-                s.classList.remove('active');
-            } else {
+            if (s.classList.contains('active')) s.classList.remove('active');
+            else {
                 document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
                 s.classList.add('active');
             }
