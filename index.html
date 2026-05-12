@@ -4,125 +4,133 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass music</title>
+    <!-- Движок YouTube -->
+    <script src="https://youtube.com"></script>
     <style>
-        :root {
-            --neon: #A020F0;
-            --glass: rgba(255, 255, 255, 0.05);
-            --blur: blur(45px);
-        }
-
-        body, html {
-            margin: 0; padding: 0; background: #000;
-            color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            height: 100vh; overflow: hidden;
-        }
-
+        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
+        body, html { margin: 0; padding: 0; background: #000; color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; height: 100vh; overflow: hidden; }
+        
+        /* Фон */
         #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: -1; }
 
-        /* НАВИГАЦИЯ */
-        .nav {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 9000;
-        }
-        .logo-center { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); position: absolute; left: 50%; transform: translateX(-50%); cursor: pointer; }
+        /* Навигация */
+        .nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000; }
+        .logo-center { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); position: absolute; left: 50%; transform: translateX(-50%); }
 
-        .btn {
-            width: 52px; height: 52px; border-radius: 50%;
-            background: var(--glass); backdrop-filter: var(--blur);
-            border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: white; transition: 0.3s;
-        }
+        .btn { width: 52px; height: 52px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: 0.3s; }
         .btn:active { transform: scale(0.9); }
 
-        /* ПЛЕЕР */
-        .main-player { margin-top: 18vh; padding-left: 5%; z-index: 100; position: relative; }
+        /* Интерфейс Плеера */
+        .player-ui { position: relative; margin-top: 18vh; padding-left: 5%; z-index: 100; }
         .album-tag { font-size: 14px; color: var(--neon); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
-        .track-title { font-size: 48px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 5px; }
+        .track-title { font-size: 48px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 5px; min-height: 60px; }
         .artist-name { font-size: 18px; opacity: 0.5; margin-bottom: 40px; }
-
         .controls { display: flex; gap: 20px; }
-        .controls .btn { width: 65px; height: 65px; font-size: 24px; border-color: rgba(255,255,255,0.1); }
+        .controls .btn { width: 65px; height: 65px; font-size: 24px; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* СКРЫТЫЙ ДВИЖОК ЯНДЕКСА */
-        .yandex-hidden {
-            position: absolute;
-            top: 0; left: 0;
-            width: 300px; height: 100px;
-            opacity: 0; z-index: 500;
-            pointer-events: auto; /* Позволяет кликать в него */
-        }
-
-        /* ЭКРАНЫ */
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.98); backdrop-filter: var(--blur); z-index: 8000; }
+        /* Экраны */
+        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.98); backdrop-filter: var(--blur); z-index: 4000; }
         .screen.active { display: flex; }
-        .section-title { font-size: 14px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-align: center; margin-bottom: 30px; }
+        
+        /* Поиск */
+        .search-box { width: 100%; background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; box-sizing: border-box; }
+        .search-box input { background: none; border: none; color: white; width: 100%; font-size: 18px; outline: none; }
+        .res-list { overflow-y: auto; margin-top: 20px; }
+        .res-item { padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
 
-        .profile-circle { width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); margin: 10vh auto; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 50px; color: var(--neon); cursor: pointer; }
+        /* Профиль */
+        .profile-circle { width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); margin: 10vh auto 0; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 50px; color: var(--neon); cursor: pointer; }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* СКРЫТЫЙ ДВИЖОК (ЧЕРНАЯ ДЫРА) */
+        #yt-player { position: absolute; left: -9999px; top: -9999px; }
     </style>
 </head>
 <body>
-
     <img id="bg-gif" src="https://giphy.com">
     <div class="overlay"></div>
 
     <div class="nav">
         <div class="btn" onclick="toggleScreen('lib')">☰</div>
-        <div class="logo-center" onclick="location.reload()">cotakbass</div>
+        <div class="logo-center">cotakbass</div>
         <div style="display: flex; gap: 10px;">
             <div class="btn" onclick="toggleScreen('prof')">👤</div>
             <div class="btn" onclick="toggleScreen('search')">?</div>
         </div>
     </div>
 
-    <!-- ТВОЙ ВИЗУАЛ -->
-    <div class="main-player">
-        <div class="album-tag">мрачные треды</div>
-        <div class="track-title">web 2.0</div>
-        <div class="artist-name">тёмный принц</div>
-
+    <!-- UI ПЛЕЕРА -->
+    <div class="player-ui">
+        <div class="album-tag">cotakbass music</div>
+        <div id="display-title" class="track-title">web 2.0</div>
+        <div id="display-author" class="artist-name">тёмный принц</div>
         <div class="controls">
-            <div class="btn">❮</div>
-            <div class="btn" style="border-color: var(--neon); box-shadow: 0 0 25px rgba(160, 32, 240, 0.4);">▶</div>
-            <div class="btn">❯</div>
-
-            <!-- НЕВИДИМЫЙ ЯНДЕКС - КЛИКИ УХОДЯТ СЮДА -->
-            <div class="yandex-hidden">
-                <iframe id="yandex-engine" frameborder="0" style="border:none;width:100%;height:100px;" src="https://yandex.ru"></iframe>
-            </div>
+            <div class="btn" onclick="prev()">❮</div>
+            <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
+            <div class="btn" onclick="next()">❯</div>
         </div>
     </div>
 
-    <!-- ЭКРАНЫ -->
+    <!-- СКРЫТЫЙ ДВИЖОК -->
+    <div id="yt-player"></div>
+
+    <!-- ЭКРАН ПОИСКА -->
+    <div id="search" class="screen">
+        <div class="search-box">
+            <input type="text" id="s-input" placeholder="напиши хуйню..." oninput="searchMusic(this.value)">
+        </div>
+        <div id="s-results" class="res-list"></div>
+    </div>
+
+    <!-- ЭКРАН ПРОФИЛЯ -->
     <div id="prof" class="screen">
         <div class="profile-circle" id="prof-btn">+<img id="ava-img" style="display:none"></div>
-        <div class="section-title">PROFILE</div>
     </div>
 
-    <div id="lib" class="screen"><div class="section-title">FAVORITES</div></div>
-    
-    <div id="search" class="screen">
-        <div class="section-title">SEARCH</div>
-        <div style="background:var(--glass); border:1px solid var(--border); border-radius:20px; padding:20px; text-align:center;">
-            Напиши название трека...
-        </div>
-    </div>
-
+    <div id="lib" class="screen"><div style="text-align:center; color:var(--neon); letter-spacing:5px;">FAVORITES</div></div>
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
     <script>
-        function toggleScreen(id) {
-            const s = document.getElementById(id);
-            if (s.classList.contains('active')) {
-                s.classList.remove('active');
-            } else {
-                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-                s.classList.add('active');
-            }
+        let ytPlayer, isPlaying = false, tracks = [];
+
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('yt-player', { height: '1', width: '1', videoId: 'dQw4w9WgXcQ' });
         }
 
-        // Аватарка
+        async function searchMusic(q) {
+            if(q.length < 3) return;
+            const res = await fetch(`https://allorigins.win{encodeURIComponent('https://apple.com' + q + '&media=music&limit=10')}`);
+            const data = JSON.parse((await res.json()).contents);
+            const list = document.getElementById('s-results');
+            list.innerHTML = "";
+            data.results.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'res-item';
+                div.innerHTML = `<div><b>${t.trackName}</b><br><small>${t.artistName}</small></div> <div class="btn" style="width:40px; height:40px">▶</div>`;
+                div.onclick = () => {
+                    document.getElementById('display-title').innerText = t.trackName;
+                    document.getElementById('display-author').innerText = t.artistName;
+                    // Здесь в идеальном мире мы ищем id на YouTube, но для теста запустим звук
+                    ytPlayer.loadVideoById('dQw4w9WgXcQ'); // Заглушка
+                    toggleScreen('search');
+                };
+                list.appendChild(div);
+            });
+        }
+
+        function playPause() {
+            if(isPlaying) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
+            isPlaying = !isPlaying;
+            document.getElementById('play-btn').innerText = isPlaying ? "Ⅱ" : "▶";
+        }
+
+        function toggleScreen(id) {
+            const s = document.getElementById(id);
+            if(s.classList.contains('active')) s.classList.remove('active');
+            else { document.querySelectorAll('.screen').forEach(el => el.classList.remove('active')); s.classList.add('active'); }
+        }
+
         document.getElementById('prof-btn').onclick = () => document.getElementById('file-up').click();
         document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
