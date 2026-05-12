@@ -2,129 +2,211 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass music</title>
     <style>
+        :root {
+            --neon-purple: #A020F0;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(160, 32, 240, 0.2);
+            --blur: blur(40px);
+        }
+
         body {
             margin: 0; padding: 0;
             background-color: #000; color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             height: 100vh; overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* Навигация */
         .nav {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 5%; position: fixed; width: 90%; top: 0; z-index: 100;
+            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 1000;
         }
 
-        .logo { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
-
-        .nav-right { display: flex; gap: 15px; }
+        .logo-neon {
+            font-size: 14px; font-weight: 700; letter-spacing: 4px;
+            color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple);
+            text-transform: lowercase; position: absolute; left: 50%; transform: translateX(-50%);
+        }
 
         .circle-btn {
-            width: 45px; height: 45px; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(160, 32, 240, 0.3);
+            width: 50px; height: 50px; border-radius: 50%;
+            background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: #A020F0; font-size: 20px; transition: 0.3s;
+            cursor: pointer; color: white; font-size: 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        .circle-btn:active { transform: scale(0.9); background: rgba(160, 32, 240, 0.1); }
 
         /* Экраны */
         .screen {
-            position: absolute; inset: 0;
-            display: none; flex-direction: column;
-            justify-content: center; align-items: center;
-            background: #000;
+            position: absolute; inset: 0; display: none; 
+            flex-direction: column; background: #000; padding: 100px 25px 25px;
+            animation: fadeIn 0.5s ease;
         }
-
         .screen.active { display: flex; }
 
-        /* ПЛЕЕР */
-        .player-content { width: 90%; text-align: left; padding-left: 5%; }
-        .track-title { font-size: 48px; font-weight: 800; margin-bottom: 5px; }
-        .track-author { font-size: 18px; color: #A020F0; opacity: 0.8; margin-bottom: 50px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .controls { display: flex; gap: 20px; align-items: center; }
-        .play-btn { width: 70px; height: 70px; font-size: 30px; border: 1px solid #A020F0; box-shadow: 0 0 15px rgba(160, 32, 240, 0.3); }
+        /* ПЛЕЕР */
+        .player-content { text-align: left; margin-top: 10vh; }
+        .track-title { font-size: 44px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; }
+        .track-author { font-size: 18px; color: var(--neon-purple); opacity: 0.8; margin-bottom: 60px; font-weight: 300; }
+
+        .controls { display: flex; gap: 20px; }
+        .controls .circle-btn { width: 65px; height: 65px; font-size: 24px; } /* Одинаковый размер */
+
+        /* ПОИСК */
+        .search-container { position: relative; width: 100%; max-width: 500px; margin: 0 auto; }
+        .search-bar {
+            width: 100%; background: var(--glass); backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 20px 60px 20px 20px; color: white; font-size: 18px; outline: none;
+            box-sizing: border-box;
+        }
+        .search-inner-btn {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--neon-purple); font-size: 20px; font-weight: 700; cursor: pointer;
+        }
+
+        /* СПИСОК ТРЕКОВ */
+        .track-list { margin-top: 30px; overflow-y: auto; }
+        .track-item {
+            padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
 
         /* ПРОФИЛЬ */
         .profile-circle {
             width: 180px; height: 180px; border-radius: 50%;
-            border: 2px solid #A020F0; background: rgba(160, 32, 240, 0.05);
+            border: 2px solid var(--neon-purple); background: var(--glass);
             display: flex; justify-content: center; align-items: center;
-            font-size: 50px; color: #A020F0; cursor: pointer;
-            box-shadow: 0 0 30px rgba(160, 32, 240, 0.2); overflow: hidden;
+            font-size: 50px; color: var(--neon-purple); cursor: pointer;
+            box-shadow: 0 0 30px rgba(160, 32, 240, 0.2); overflow: hidden; margin: 0 auto;
         }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
 
-        .back-btn { position: fixed; top: 25px; left: 20px; z-index: 200; }
-
-        #file-input { display: none; }
+        .fav-title {
+            font-size: 14px; font-weight: 700; letter-spacing: 4px;
+            color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple);
+            text-transform: lowercase; text-align: center; margin-bottom: 40px;
+        }
     </style>
 </head>
 <body>
 
+    <div class="nav">
+        <div class="circle-btn" onclick="showScreen('library-screen')">☰</div>
+        <div class="logo-neon">cotakbass</div>
+        <div style="display: flex; gap: 10px;">
+            <div class="circle-btn" onclick="showScreen('profile-screen')">👤</div>
+            <div class="circle-btn" onclick="showScreen('search-screen')">?</div>
+        </div>
+    </div>
+
     <!-- ПЛЕЕР -->
     <div id="player-screen" class="screen active">
-        <div class="nav">
-            <div class="logo">cotakbass</div>
-            <div class="nav-right">
-                <div class="circle-btn" onclick="showScreen('profile-screen')">👤</div>
-                <div class="circle-btn">?</div>
-            </div>
-        </div>
-        
         <div class="player-content">
-            <div class="track-title">Music Track</div>
-            <div class="track-author">Artist Name</div>
+            <div id="main-title" class="track-title">Музыка</div>
+            <div id="main-author" class="track-author">Исполнитель</div>
             <div class="controls">
                 <button class="circle-btn">❮</button>
-                <button class="circle-btn play-btn">▶</button>
+                <button class="circle-btn" style="border-color: var(--neon-purple);">▶</button>
                 <button class="circle-btn">❯</button>
             </div>
         </div>
     </div>
 
-    <!-- ПРОФИЛЬ -->
-    <div id="profile-screen" class="screen">
-        <div class="circle-btn back-btn" onclick="showScreen('player-screen')">←</div>
-        
-        <div class="profile-circle" id="circle">
-            <span id="plus-icon">+</span>
-            <img id="preview" style="display:none;">
+    <!-- БИБЛИОТЕКА -->
+    <div id="library-screen" class="screen">
+        <div class="circle-btn" style="position:fixed; top:25px; left:25px;" onclick="showScreen('player-screen')">←</div>
+        <div class="fav-title">favorites</div>
+        <div class="track-list" id="fav-list">
+            <!-- Здесь будут любимые треки -->
+            <div style="text-align:center; opacity:0.3; margin-top:50px;">Список пуст</div>
         </div>
-        <p style="margin-top:20px; opacity:0.5; letter-spacing:3px; font-size:12px;">PROFILE</p>
     </div>
 
-    <input type="file" id="file-input" accept="image/*">
+    <!-- ПОИСК -->
+    <div id="search-screen" class="screen">
+        <div class="circle-btn" style="position:fixed; top:25px; left:25px;" onclick="showScreen('player-screen')">←</div>
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="напиши хуйню" id="search-input">
+            <button class="search-inner-btn">?</button>
+        </div>
+        <div class="track-list" id="search-results"></div>
+    </div>
+
+    <!-- ПРОФИЛЬ -->
+    <div id="profile-screen" class="screen">
+        <div class="circle-btn" style="position:fixed; top:25px; left:25px;" onclick="showScreen('player-screen')">←</div>
+        <div class="profile-circle" id="avatar-zone">
+            <span id="plus-icon">+</span>
+            <img id="avatar-preview" style="display:none;">
+        </div>
+        <div class="fav-title" style="margin-top:30px; opacity:0.5;">profile</div>
+    </div>
+
+    <input type="file" id="file-input" style="display:none" accept="image/*">
 
     <script>
-        // Функция переключения экранов
-        function showScreen(screenId) {
+        // Переключение экранов
+        function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            document.getElementById(id).classList.add('active');
         }
 
-        const circle = document.getElementById('circle');
+        // Логика аватара
+        const avatarZone = document.getElementById('avatar-zone');
         const fileInput = document.getElementById('file-input');
-        const preview = document.getElementById('preview');
-        const plusIcon = document.getElementById('plus-icon');
+        const preview = document.getElementById('avatar-preview');
+        const plus = document.getElementById('plus-icon');
 
-        circle.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', (e) => {
+        avatarZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                    preview.src = event.target.result;
+                reader.onload = (ev) => {
+                    preview.src = ev.target.result;
                     preview.style.display = 'block';
-                    plusIcon.style.display = 'none';
+                    plus.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             }
-        });
+        };
+
+        // Живой поиск (пример данных)
+        const mockTracks = [
+            {t: "NIGHTCRAWLER", a: "Travis Scott"},
+            {t: "FEIN", a: "Travis Scott"},
+            {t: "STARBOY", a: "The Weeknd"}
+        ];
+
+        document.getElementById('search-input').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const results = document.getElementById('search-results');
+            results.innerHTML = "";
+            
+            if(val.length > 0) {
+                mockTracks.filter(item => item.t.toLowerCase().includes(val)).forEach(track => {
+                    const div = document.createElement('div');
+                    div.className = 'track-item';
+                    div.innerHTML = `<div><b>${track.t}</b><br><small style="color:var(--neon-purple)">${track.a}</small></div> <div class="circle-btn" style="width:40px; height:40px">▶</div>`;
+                    div.onclick = () => {
+                        document.getElementById('main-title').innerText = track.t;
+                        document.getElementById('main-author').innerText = track.a;
+                        showScreen('player-screen');
+                    };
+                    results.appendChild(div);
+                });
+            }
+        };
     </script>
 </body>
 </html>
