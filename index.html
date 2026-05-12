@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
-    <!-- Подключаем базу -->
-    <script src="https://jsdelivr.net"></script>
+    <!-- ВСТРОЕННАЯ БИБЛИОТЕКА (CDN ОБХОД) -->
+    <script src="https://unpkg.com"></script>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); }
         body { margin: 0; background: #000; color: white; font-family: sans-serif; padding-bottom: 100px; }
@@ -19,7 +19,6 @@
         .modal.active { display: flex; }
         input { background: #111; border: 1px solid #333; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; outline: none; width: 100%; box-sizing: border-box; }
         .btn-post { background: var(--neon); color: white; padding: 18px; border-radius: 12px; text-align: center; font-weight: 800; cursor: pointer; border: none; width: 100%; }
-        .btn-post:disabled { background: #333; cursor: not-allowed; }
         #loader { display: none; text-align: center; color: var(--neon); padding: 20px; font-weight: bold; }
         .file-label { display: block; background: #222; border: 1px dashed #444; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 15px; cursor: pointer; font-size: 12px; }
     </style>
@@ -28,44 +27,32 @@
 
     <div class="nav"><div class="logo">cotakbass</div></div>
     <div class="container" id="feed"></div>
-    <button class="fab" id="fab-btn" onclick="openModal()">+</button>
+    <button class="fab" onclick="openModal()">+</button>
 
     <div class="modal" id="modal">
         <h2 style="text-align:center">опубликовать</h2>
         <input type="text" id="tTitle" placeholder="название трека">
         <input type="text" id="uName" placeholder="твой ник">
-        
         <label class="file-label" for="fInp" id="fStatus">ВЫБРАТЬ MP3 ФАЙЛ</label>
         <input type="file" id="fInp" accept="audio/*" style="display:none">
-        
-        <button class="btn-post" id="upBtn" onclick="handleSend()" disabled>ПОДКЛЮЧЕНИЕ К БАЗЕ...</button>
-        <div id="loader">ОТПРАВКА... ЭТО МОЖЕТ ЗАНЯТЬ МИНУТУ</div>
+        <button class="btn-post" id="upBtn" onclick="handleSend()">Опубликовать</button>
+        <div id="loader">ПОДОЖДИТЕ, ИДЕТ ЗАГРУЗКА...</div>
         <p onclick="closeModal()" style="text-align:center; opacity:0.4; margin-top:20px; cursor:pointer">отмена</p>
     </div>
 
     <script>
-        // Инициализируем переменные сразу, но не вызываем
+        const S_URL = "https://supabase.co";
+        const S_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv";
         let sb = null;
 
-        // Ждем полной загрузки страницы и скриптов
-        window.onload = function() {
-            try {
-                const S_URL = "https://supabase.co";
-                const S_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; 
-                
-                if (typeof supabase === 'undefined') {
-                    document.getElementById('upBtn').innerText = "ОШИБКА: СКРИПТ БАЗЫ НЕ ЗАГРУЖЕН";
-                    return;
-                }
-
+        function init() {
+            if (typeof supabase !== 'undefined') {
                 sb = supabase.createClient(S_URL, S_KEY);
-                document.getElementById('upBtn').innerText = "Опубликовать";
-                document.getElementById('upBtn').disabled = false;
                 loadFeed();
-            } catch (err) {
-                alert("Критическая ошибка инициализации: " + err.message);
+            } else {
+                alert("Ошибка: серверы Supabase недоступны. Попробуй включить VPN.");
             }
-        };
+        }
 
         function openModal() { document.getElementById('modal').classList.add('active'); }
         function closeModal() { document.getElementById('modal').classList.remove('active'); }
@@ -75,60 +62,47 @@
         };
 
         async function loadFeed() {
-            const { data, error } = await sb.from('posts').select('*').order('id', { ascending: false });
-            if (error) { console.error("Feed error:", error); return; }
-            const feed = document.getElementById('feed');
-            feed.innerHTML = "";
-            data.forEach(item => {
-                feed.innerHTML += `<div class="card"><small style="color:var(--neon)">By: ${item.author}</small><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
-            });
+            try {
+                const { data, error } = await sb.from('posts').select('*').order('id', { ascending: false });
+                if (data) {
+                    const feed = document.getElementById('feed');
+                    feed.innerHTML = "";
+                    data.forEach(item => {
+                        feed.innerHTML += `<div class="card"><small style="color:var(--neon)">By: ${item.author}</small><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
+                    });
+                }
+            } catch (e) {}
         }
 
         async function handleSend() {
-            const title = document.getElementById('tTitle').value;
-            const user = document.getElementById('uName').value;
-            const fileInput = document.getElementById('fInp');
-            const file = fileInput.files[0];
+            const t = document.getElementById('tTitle').value;
+            const u = document.getElementById('uName').value;
+            const f = document.getElementById('fInp').files[0];
 
-            if (!title || !user || !file) {
-                alert("Заполни все поля и выбери файл!");
-                return;
-            }
+            if (!t || !u || !f) return alert("Заполни всё!");
 
             document.getElementById('upBtn').style.display = 'none';
             document.getElementById('loader').style.display = 'block';
 
             try {
-                const fileName = Date.now() + ".mp3";
-                
-                // 1. Пытаемся загрузить в Storage
-                console.log("Starting upload...");
-                const { data: upData, error: upError } = await sb.storage.from('music').upload(fileName, file);
-                
-                if (upError) {
-                    throw new Error("Ошибка Storage (загрузки файла): " + upError.message);
-                }
+                const fName = Date.now() + ".mp3";
+                const { error: upErr } = await sb.storage.from('music').upload(fName, f);
+                if (upErr) throw upErr;
 
-                // 2. Получаем ссылку
-                const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fileName);
-                
-                // 3. Пытаемся записать в таблицу
-                console.log("Saving to DB...");
-                const { error: dbError } = await sb.from('posts').insert([
-                    { title: title, author: user, link: publicUrl }
-                ]);
-                
-                if (dbError) {
-                    throw new Error("Ошибка Database (записи в таблицу): " + dbError.message);
-                }
+                const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fName);
+                const { error: dbErr } = await sb.from('posts').insert([{ title: t, author: u, link: publicUrl }]);
+                if (dbErr) throw dbErr;
 
                 location.reload();
             } catch (err) {
-                alert("ТЕХНИЧЕСКАЯ ИНФОРМАЦИЯ: " + err.message);
+                alert("Ошибка: " + err.message);
                 document.getElementById('upBtn').style.display = 'block';
                 document.getElementById('loader').style.display = 'none';
             }
         }
+
+        // Запуск
+        setTimeout(init, 1000);
     </script>
 </body>
 </html>
