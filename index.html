@@ -14,17 +14,16 @@
 
         body, html {
             margin: 0; padding: 0; background: #000;
-            color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            height: 100vh; overflow: hidden;
+            color: white; font-family: -apple-system, system-ui, sans-serif;
+            height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent;
         }
 
         #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; transition: 1s; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: -1; }
 
-        /* НАВИГАЦИЯ */
         .nav {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000;
+            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 9999;
         }
         .logo-center {
             font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon);
@@ -36,47 +35,42 @@
             width: 52px; height: 52px; border-radius: 50%;
             background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
             border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: white; transition: 0.3s;
+            cursor: pointer; color: white; transition: 0.2s; z-index: 10;
         }
+        .btn:active { transform: scale(0.9); }
 
-        /* ЭКРАНЫ */
         .screen {
             position: fixed; inset: 0; display: none; 
             flex-direction: column; padding: 100px 25px 25px;
-            background: #000; z-index: 4000;
+            background: #000; z-index: 8000;
         }
-        .screen.active { display: flex; }
 
-        /* ПЛЕЕР */
         .player-content { text-align: left; margin-top: 15vh; padding-left: 5%; }
-        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; min-height: 50px; }
+        .track-title { font-size: 38px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 8px; min-height: 50px; }
         .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; }
-        .controls { display: flex; gap: 20px; }
-        .controls .btn { width: 65px; height: 65px; font-size: 24px; border-color: rgba(255,255,255,0.1); }
+        
+        .controls { display: flex; gap: 20px; z-index: 100; position: relative; }
+        .controls .btn { width: 65px; height: 65px; font-size: 24px; }
 
-        /* ПОИСК */
         .search-box {
             width: 100%; background: var(--glass); border: 1px solid var(--border);
             border-radius: 22px; padding: 15px 20px; box-sizing: border-box;
-            display: flex; align-items: center; margin-bottom: 10px;
+            display: flex; align-items: center; margin-bottom: 15px;
         }
         .search-box input { background: none; border: none; color: white; width: 100%; font-size: 18px; outline: none; }
 
-        .list { overflow-y: auto; flex-grow: 1; padding-bottom: 20px; }
+        .list { overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
         .item { 
-            padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); 
+            padding: 18px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); 
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.02); margin-bottom: 8px; border-radius: 15px;
-            cursor: pointer; transition: 0.2s;
+            background: rgba(255,255,255,0.02); margin-bottom: 10px; border-radius: 18px;
         }
-        .item:active { background: rgba(160, 32, 240, 0.1); }
 
-        /* ПРОФИЛЬ */
         .profile-circle {
             width: 180px; height: 180px; border-radius: 50%;
             border: 2px solid var(--neon); background: var(--glass);
             margin: 10vh auto; display: flex; justify-content: center; align-items: center;
-            overflow: hidden; position: relative;
+            overflow: hidden; position: relative; font-size: 50px; color: var(--neon);
         }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
     </style>
@@ -90,22 +84,22 @@
         <div class="btn" onclick="toggleScreen('lib-screen')">☰</div>
         <div class="logo-center">cotakbass</div>
         <div style="display: flex; gap: 10px;">
-            <div class="btn" id="nav-prof" onclick="toggleScreen('prof-screen')">👤</div>
+            <div class="btn" onclick="toggleScreen('prof-screen')">👤</div>
             <div class="btn" onclick="toggleScreen('search-screen')">?</div>
         </div>
     </div>
 
-    <audio id="audio-player" crossorigin="anonymous"></audio>
+    <audio id="audio-player"></audio>
 
     <!-- ПЛЕЕР -->
     <div id="player-screen" style="display: flex; flex-direction: column; padding: 100px 25px;">
         <div class="player-content">
-            <div id="display-title" class="track-title">cotakbass</div>
-            <div id="display-author" class="track-author">начни писать название...</div>
+            <div id="display-title" class="track-title">Мировая база</div>
+            <div id="display-author" class="track-author">введите название трека в поиске</div>
             <div class="controls">
-                <div class="btn">❮</div>
-                <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
-                <div class="btn">❯</div>
+                <div class="btn" onclick="alert('Добавьте больше треков в favorites')">❮</div>
+                <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="handlePlayPause()">▶</div>
+                <div class="btn" onclick="alert('Добавьте больше треков в favorites')">❯</div>
             </div>
         </div>
     </div>
@@ -119,31 +113,37 @@
         <div class="list" id="search-results"></div>
     </div>
 
+    <!-- БИБЛИОТЕКА -->
     <div id="lib-screen" class="screen">
         <div style="text-align:center; color:var(--neon); letter-spacing:5px; margin-bottom:30px;">FAVORITES</div>
-        <div class="list" id="fav-list"></div>
+        <div class="list" id="fav-list">
+            <div style="text-align:center; opacity:0.3; margin-top:50px;">Здесь будут ваши треки</div>
+        </div>
     </div>
 
+    <!-- ПРОФИЛЬ -->
     <div id="prof-screen" class="screen">
-        <div class="profile-circle" id="prof-btn"><span id="plus">+</span><img id="ava-img" style="display:none"></div>
+        <div class="profile-circle" id="prof-btn-click">+<img id="ava-img" style="display:none"></div>
     </div>
 
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
     <script>
         const audio = document.getElementById('audio-player');
-        let curScreen = 'player-screen';
+        const playBtn = document.getElementById('play-btn');
+        let currentScreen = 'player-screen';
 
-        // ЖИВОЙ ПОИСК ЧЕРЕЗ ITUNES (APPLE MUSIC) - РАБОТАЕТ В РФ
-        const searchInput = document.getElementById('search-input');
-        searchInput.addEventListener('input', async (e) => {
+        // 1. ЖИВОЙ ПОИСК
+        document.getElementById('search-input').addEventListener('input', async (e) => {
             const query = e.target.value;
-            if(query.length < 3) return;
+            if (query.length < 3) return;
 
             try {
-                // Прямой запрос к Apple iTunes API
-                const res = await fetch(`https://apple.com{encodeURIComponent(query)}&media=music&limit=15`);
-                const data = await res.json();
+                // Используем AllOrigins прокси для стабильности
+                const res = await fetch(`https://allorigins.win{encodeURIComponent('https://apple.com' + query + '&media=music&limit=15')}`);
+                const json = await res.json();
+                const data = JSON.parse(json.contents);
+                
                 const list = document.getElementById('search-results');
                 list.innerHTML = "";
                 
@@ -151,46 +151,52 @@
                     const div = document.createElement('div');
                     div.className = 'item';
                     div.innerHTML = `<div><b>${t.trackName}</b><br><small style="color:#888">${t.artistName}</small></div> <div class="btn" style="width:40px; height:40px; border-color:var(--neon)">▶</div>`;
-                    div.onclick = () => playTrack(t.previewUrl, t.trackName, t.artistName);
+                    div.onclick = () => selectTrack(t.previewUrl, t.trackName, t.artistName);
                     list.appendChild(div);
                 });
-            } catch(err) { console.error("Search error"); }
+            } catch(err) { console.log("Search error"); }
         });
 
-        function playTrack(url, title, author) {
+        function selectTrack(url, title, author) {
             audio.src = url;
-            audio.play();
             document.getElementById('display-title').innerText = title;
             document.getElementById('display-author').innerText = author;
-            document.getElementById('play-btn').innerText = "Ⅱ";
-            toggleScreen('search-screen'); // Закрываем поиск
+            handlePlayPause(true); // Принудительный запуск
+            toggleScreen('search-screen'); // Закрыть поиск
         }
 
-        function playPause() {
-            if(!audio.src) return;
-            if(audio.paused) { audio.play(); document.getElementById('play-btn').innerText = "Ⅱ"; }
-            else { audio.pause(); document.getElementById('play-btn').innerText = "▶"; }
+        function handlePlayPause(forcePlay = false) {
+            if (!audio.src) return;
+            if (audio.paused || forcePlay) {
+                audio.play().then(() => {
+                    playBtn.innerText = "Ⅱ";
+                }).catch(e => alert("Нажмите еще раз, чтобы разрешить звук"));
+            } else {
+                audio.pause();
+                playBtn.innerText = "▶";
+            }
         }
 
         function toggleScreen(id) {
             const screen = document.getElementById(id);
-            if(screen.style.display === 'flex') {
+            if (screen.style.display === 'flex') {
                 screen.style.display = 'none';
-                curScreen = 'player-screen';
+                currentScreen = 'player-screen';
             } else {
                 document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
                 screen.style.display = 'flex';
-                curScreen = id;
+                currentScreen = id;
             }
         }
 
-        document.getElementById('prof-btn').onclick = () => document.getElementById('file-up').click();
+        // Аватарка
+        document.getElementById('prof-btn-click').onclick = () => document.getElementById('file-up').click();
         document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                document.getElementById('ava-img').src = ev.target.result;
-                document.getElementById('ava-img').style.display = 'block';
-                document.getElementById('plus').style.display = 'none';
+                const img = document.getElementById('ava-img');
+                img.src = ev.target.result;
+                img.style.display = 'block';
             };
             reader.readAsDataURL(e.target.files);
         };
