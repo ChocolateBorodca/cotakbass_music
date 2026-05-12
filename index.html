@@ -7,45 +7,66 @@
     <script src="https://jsdelivr.net"></script>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
-        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; }
+        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; overflow-x: hidden; }
+        
         #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.3; }
         .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7), #000); z-index: -1; }
+        
         .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); backdrop-filter: var(--blur); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; }
         .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 10px var(--neon); text-transform: lowercase; }
+
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); }
-        .card h3 { margin: 0 0 8px 0; font-size: 22px; font-weight: 800; }
+        
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); animation: slideUp 0.5s ease; }
+        .card h3 { margin: 0 0 8px 0; font-size: 20px; font-weight: 800; }
         .card .user-tag { font-size: 11px; color: var(--neon); opacity: 0.7; text-transform: uppercase; margin-bottom: 15px; display: block; }
-        audio { width: 100%; height: 35px; border-radius: 10px; filter: invert(1) hue-rotate(180deg); }
-        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; box-shadow: 0 0 30px rgba(160, 32, 240, 0.4); z-index: 2000; border: none; font-weight: 800; }
+        
+        audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1) hue-rotate(180deg) opacity(0.8); }
+
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; box-shadow: 0 0 30px rgba(160, 32, 240, 0.4); z-index: 2000; border: none; }
+
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: none; flex-direction: column; padding: 60px 25px; z-index: 3000; backdrop-filter: blur(20px); }
         .modal.active { display: flex; }
-        input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 18px; color: white; margin-bottom: 15px; outline: none; font-size: 16px; display: block; text-align: center; cursor: pointer; }
-        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; }
-        .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 4000; }
+        
+        input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 18px; color: white; margin-bottom: 12px; outline: none; font-size: 16px; display: block; text-align: center; cursor: pointer; width: 100%; box-sizing: border-box; }
+        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; width: 100%; }
+        
+        /* Лоадер */
+        .loader { display: none; text-align: center; margin-top: 20px; }
+        .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 15px; }
+        .progress-fill { width: 0%; height: 100%; background: var(--neon); transition: 0.4s; box-shadow: 0 0 10px var(--neon); }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <img id="bg-gif" src="https://giphy.com">
     <div class="overlay"></div>
+
     <div class="nav"><div class="logo">cotakbass</div></div>
+
     <div class="container" id="feed"></div>
+
     <button class="fab" onclick="toggleModal()">+</button>
 
     <div class="modal" id="postModal">
-        <h2 style="text-align: center;">Загрузить трек</h2>
+        <h2 style="text-align: center; margin-bottom: 30px;">Загрузить трек</h2>
         <input type="text" id="trackTitle" placeholder="Название трека">
         <input type="text" id="userName" placeholder="Твой ник">
         
-        <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3 файл</label>
+        <label class="file-label" for="fileInput" id="fileStatus">Выбрать файл (.mp3)</label>
         <input type="file" id="fileInput" accept="audio/mpeg" style="display: none;" onchange="updateFileName()">
         
         <button class="btn-post" id="uploadBtn" onclick="handleUpload()">Опубликовать</button>
-        <p onclick="toggleModal()" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
-    </div>
+        
+        <div class="loader" id="loader">
+            <span id="loadText" style="color: var(--neon); font-weight: 700;">Трек летит в облако...</span>
+            <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        </div>
 
-    <div class="loading-overlay" id="loader">Подожди, трек летит в облако...</div>
+        <p onclick="toggleModal()" id="cancelBtn" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
+    </div>
 
     <script>
         const SUPABASE_URL = "https://supabase.co";
@@ -53,9 +74,10 @@
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         function toggleModal() { document.getElementById('postModal').classList.toggle('active'); }
+        
         function updateFileName() {
-            const file = document.getElementById('fileInput').files[0];
-            if(file) document.getElementById('fileStatus').innerText = "Выбрано: " + file.name;
+            const f = document.getElementById('fileInput').files;
+            if(f.length > 0) document.getElementById('fileStatus').innerText = "Выбрано: " + f[0].name.substring(0, 15) + "...";
         }
 
         async function loadFeed() {
@@ -66,7 +88,7 @@
             data.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.innerHTML = `<span class="user-tag">By: ${item.author}</span><h3>${item.title}</h3><audio controls src="${item.link}"></audio>`;
+                card.innerHTML = `<span class="user-tag">Upload by: ${item.author}</span><h3>${item.title}</h3><audio controls src="${item.link}"></audio>`;
                 feed.appendChild(card);
             });
         }
@@ -74,37 +96,56 @@
         async function handleUpload() {
             const title = document.getElementById('trackTitle').value;
             const author = document.getElementById('userName').value;
-            const file = document.getElementById('fileInput').files[0];
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
 
-            if (!title || !author || !file) return alert("Заполни всё!");
+            if (!title || !author || !file) return alert("Заполни все поля и выбери трек!");
 
-            document.getElementById('loader').style.display = 'flex';
+            // Если файл больше 15МБ, предупреждаем
+            if (file.size > 15 * 1024 * 1024) return alert("Файл слишком большой. Максимум 15МБ.");
 
-            // 1. Загружаем файл в Storage
-            const fileName = Date.now() + "_" + file.name;
-            const { data: uploadData, error: uploadError } = await client.storage.from('music').upload(fileName, file);
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('uploadBtn').style.display = 'none';
+            
+            let p = 0;
+            const progressFill = document.getElementById('progress');
+            const interval = setInterval(() => { if(p < 85) p += 2; progressFill.style.width = p + '%'; }, 300);
 
-            if (uploadError) {
-                alert("Ошибка загрузки файла. Проверь Policies в Storage!");
+            try {
+                const fileName = `${Date.now()}_music.mp3`;
+                
+                // ЗАГРУЗКА
+                const { data: uploadData, error: uploadError } = await client.storage
+                    .from('music')
+                    .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+                if (uploadError) throw uploadError;
+
+                const { data: urlData } = client.storage.from('music').getPublicUrl(fileName);
+                
+                const { error: dbError } = await client.from('posts').insert([
+                    { title: title, author: author, link: urlData.publicUrl }
+                ]);
+
+                if (dbError) throw dbError;
+
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+                
+                setTimeout(() => {
+                    toggleModal();
+                    loadFeed();
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('uploadBtn').style.display = 'block';
+                    location.reload(); // Перезагружаем для надежности
+                }, 800);
+
+            } catch (err) {
+                clearInterval(interval);
+                alert("Ошибка сети. Попробуй файл поменьше или другой интернет.");
                 document.getElementById('loader').style.display = 'none';
-                return;
-            }
-
-            // 2. Получаем публичную ссылку
-            const { data: urlData } = client.storage.from('music').getPublicUrl(fileName);
-            const publicUrl = urlData.publicUrl;
-
-            // 3. Записываем в базу данных
-            const { error: dbError } = await client.from('posts').insert([{ title, author, link: publicUrl }]);
-
-            document.getElementById('loader').style.display = 'none';
-
-            if (!dbError) {
-                toggleModal();
-                loadFeed();
-                document.getElementById('trackTitle').value = "";
-                document.getElementById('fileInput').value = "";
-                document.getElementById('fileStatus').innerText = "Выбрать MP3 файл";
+                document.getElementById('uploadBtn').style.display = 'block';
+                console.error(err);
             }
         }
 
