@@ -49,7 +49,7 @@
 
         /* ПЛЕЕР */
         .player-content { text-align: left; margin-top: 15vh; padding-left: 5%; }
-        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; }
+        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; min-height: 50px; }
         .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; }
         .controls { display: flex; gap: 20px; }
         .controls .btn { width: 65px; height: 65px; font-size: 24px; border-color: rgba(255,255,255,0.1); }
@@ -66,9 +66,10 @@
         .item { 
             padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); 
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.02); margin-bottom: 5px; border-radius: 15px;
-            cursor: pointer;
+            background: rgba(255,255,255,0.02); margin-bottom: 8px; border-radius: 15px;
+            cursor: pointer; transition: 0.2s;
         }
+        .item:active { background: rgba(160, 32, 240, 0.1); }
 
         /* ПРОФИЛЬ */
         .profile-circle {
@@ -100,11 +101,11 @@
     <div id="player-screen" style="display: flex; flex-direction: column; padding: 100px 25px;">
         <div class="player-content">
             <div id="display-title" class="track-title">cotakbass</div>
-            <div id="display-author" class="track-author">напиши в поиске трек</div>
+            <div id="display-author" class="track-author">начни писать название...</div>
             <div class="controls">
-                <div class="btn" onclick="prev()">❮</div>
+                <div class="btn">❮</div>
                 <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
-                <div class="btn" onclick="next()">❯</div>
+                <div class="btn">❯</div>
             </div>
         </div>
     </div>
@@ -118,13 +119,11 @@
         <div class="list" id="search-results"></div>
     </div>
 
-    <!-- БИБЛИОТЕКА -->
     <div id="lib-screen" class="screen">
         <div style="text-align:center; color:var(--neon); letter-spacing:5px; margin-bottom:30px;">FAVORITES</div>
         <div class="list" id="fav-list"></div>
     </div>
 
-    <!-- ПРОФИЛЬ -->
     <div id="prof-screen" class="screen">
         <div class="profile-circle" id="prof-btn"><span id="plus">+</span><img id="ava-img" style="display:none"></div>
     </div>
@@ -132,37 +131,30 @@
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
     <script>
-        const USER = "ChocolateBorodca";
-        const REPO = "cotakbass_music";
         const audio = document.getElementById('audio-player');
-        let gifs = [], curScreen = 'player-screen';
+        let curScreen = 'player-screen';
 
-        async function loadGifs() {
-            try {
-                const res = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
-                const data = await res.json();
-                gifs = data.filter(f => f.name.endsWith('.gif')).map(f => f.download_url);
-            } catch(e) {}
-        }
-
+        // ЖИВОЙ ПОИСК ЧЕРЕЗ ITUNES (APPLE MUSIC) - РАБОТАЕТ В РФ
         const searchInput = document.getElementById('search-input');
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value;
             if(query.length < 3) return;
 
-            const res = await fetch(`https://allorigins.win{encodeURIComponent('https://deezer.com' + query)}`);
-            const json = await res.json();
-            const data = JSON.parse(json.contents);
-            const list = document.getElementById('search-results');
-            list.innerHTML = "";
-            
-            data.data.forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                div.innerHTML = `<div><b>${t.title}</b><br><small style="color:#888">${t.artist.name}</small></div> <div class="btn" style="width:40px; height:40px; border-color:var(--neon)">▶</div>`;
-                div.onclick = () => playTrack(t.preview, t.title, t.artist.name);
-                list.appendChild(div);
-            });
+            try {
+                // Прямой запрос к Apple iTunes API
+                const res = await fetch(`https://apple.com{encodeURIComponent(query)}&media=music&limit=15`);
+                const data = await res.json();
+                const list = document.getElementById('search-results');
+                list.innerHTML = "";
+                
+                data.results.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `<div><b>${t.trackName}</b><br><small style="color:#888">${t.artistName}</small></div> <div class="btn" style="width:40px; height:40px; border-color:var(--neon)">▶</div>`;
+                    div.onclick = () => playTrack(t.previewUrl, t.trackName, t.artistName);
+                    list.appendChild(div);
+                });
+            } catch(err) { console.error("Search error"); }
         });
 
         function playTrack(url, title, author) {
@@ -172,7 +164,6 @@
             document.getElementById('display-author').innerText = author;
             document.getElementById('play-btn').innerText = "Ⅱ";
             toggleScreen('search-screen'); // Закрываем поиск
-            if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[Math.floor(Math.random()*gifs.length)];
         }
 
         function playPause() {
@@ -203,8 +194,6 @@
             };
             reader.readAsDataURL(e.target.files);
         };
-
-        loadGifs();
     </script>
 </body>
 </html>
