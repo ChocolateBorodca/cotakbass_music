@@ -14,7 +14,7 @@
 
         body, html {
             margin: 0; padding: 0; background: #000;
-            color: white; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent;
         }
 
@@ -22,7 +22,7 @@
         #bg-gif {
             position: fixed; inset: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: -2; opacity: 0.5;
-            transition: opacity 1s;
+            transition: opacity 1.5s ease;
         }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: -1; }
 
@@ -53,12 +53,13 @@
         }
         .screen.active { display: flex; }
 
-        /* ПЛЕЕР */
-        .player-content { text-align: left; margin-top: 15vh; padding-left: 5%; }
-        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; }
-        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; opacity: 0.8; }
-        .controls { display: flex; gap: 20px; }
-        .controls .btn { width: 65px; height: 65px; font-size: 24px; }
+        /* ПЛЕЕР (SOUNDCLOUD EMBED) */
+        .player-container {
+            width: 100%; max-width: 500px; margin: 10vh auto 0;
+            background: var(--glass); border: 1px solid var(--border);
+            border-radius: 25px; overflow: hidden; backdrop-filter: var(--blur);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
 
         /* ПОИСК */
         .search-box {
@@ -69,15 +70,15 @@
         .search-box input { background: none; border: none; color: white; width: 85%; font-size: 18px; outline: none; }
         .search-confirm { color: var(--neon); font-weight: 900; font-size: 22px; cursor: pointer; position: absolute; right: 20px; }
 
+        /* СПИСКИ */
         .list { margin-top: 20px; overflow-y: auto; flex-grow: 1; }
-        .item { padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .item { padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 
         /* ПРОФИЛЬ */
-        .profile-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
         .profile-circle {
             width: 180px; height: 180px; border-radius: 50%;
             border: 2px solid var(--neon); background: var(--glass);
-            display: flex; justify-content: center; align-items: center;
+            margin: 15vh auto 0; display: flex; justify-content: center; align-items: center;
             overflow: hidden; box-shadow: 0 0 30px rgba(160, 32, 240, 0.2); position: relative;
         }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
@@ -99,23 +100,25 @@
         </div>
     </div>
 
-    <!-- ПЛЕЕР -->
+    <!-- ЭКРАН ПЛЕЕРА -->
     <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
-        <div class="player-content">
-            <div id="track-title" class="track-title">Загрузка...</div>
-            <div id="track-author" class="track-author">Синхронизация</div>
-            <div class="controls">
-                <div class="btn" onclick="prev()">❮</div>
-                <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
-                <div class="btn" onclick="next()">❯</div>
-            </div>
+        <div class="player-container" id="sc-wrapper">
+            <!-- Сюда вставляется плеер -->
+            <iframe id="sc-iframe" width="100%" height="300" scrolling="no" frameborder="no" allow="autoplay" 
+                src="https://soundcloud.com">
+            </iframe>
         </div>
+        <div style="text-align: center; margin-top: 30px; opacity: 0.4; font-size: 10px; letter-spacing: 2px;">SC ENGINE ACTIVE</div>
     </div>
 
     <!-- БИБЛИОТЕКА -->
     <div id="lib-screen" class="screen">
         <div class="fav-title">favorites</div>
-        <div class="list" id="fav-list"></div>
+        <div class="list" id="fav-list">
+            <!-- Пример твоих треков -->
+            <div class="item" onclick="loadTrack('1149727453')"><div><b>NIGHTCRAWLER</b><br><small>Travis Scott</small></div> <div class="btn" style="width:40px; height:40px">▶</div></div>
+            <div class="item" onclick="loadTrack('275210960')"><div><b>STARBOY</b><br><small>The Weeknd</small></div> <div class="btn" style="width:40px; height:40px">▶</div></div>
+        </div>
     </div>
 
     <!-- ПОИСК -->
@@ -124,53 +127,43 @@
             <input type="text" id="search-input" placeholder="напиши хуйню">
             <div class="search-confirm">?</div>
         </div>
-        <div class="list" id="search-list"></div>
+        <div class="list" id="search-list">
+            <div style="text-align:center; opacity:0.3; margin-top:50px;">Ищи треки из библиотеки...</div>
+        </div>
     </div>
 
     <!-- ПРОФИЛЬ -->
     <div id="prof-screen" class="screen">
-        <div class="profile-container">
-            <div class="profile-circle" id="prof-upload">
-                <span id="plus" style="font-size:50px; color:var(--neon);">+</span>
-                <img id="ava-img" style="display:none">
-            </div>
+        <div class="profile-circle" id="prof-upload">
+            <span id="plus" style="font-size:50px; color:var(--neon);">+</span>
+            <img id="ava-img" style="display:none">
         </div>
-        <input type="file" id="file-up" style="display:none" accept="image/*">
+        <div class="fav-title" style="margin-top: 30px;">profile</div>
     </div>
 
+    <input type="file" id="file-up" style="display:none" accept="image/*">
+
     <script>
-        // === ТВОИ ДАННЫЕ (ПРОВЕРЬ, ЧТОБЫ БЫЛО ОДИН В ОДИН) ===
         const USER = "ChocolateBorodca";
         const REPO = "cotakbass_music";
 
-        let tracks = [], gifs = [], curIdx = 0, isPlaying = false, curScreen = 'player-screen';
-        const audio = new Audio();
+        let gifs = [], curScreen = 'player-screen';
 
-        async function init() {
+        // Загрузка гифок из твоего GitHub
+        async function loadGifs() {
             try {
-                const res = await fetch(`https://github.com{USER}/${REPO}/contents/music`);
-                const data = await res.json();
-                
-                tracks = data.filter(f => f.name.toLowerCase().endsWith('.mp3')).map(f => ({
-                    name: f.name.replace('.mp3', ''),
-                    url: f.download_url
-                }));
-
-                const bRes = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
-                if (bRes.ok) {
-                    const bData = await bRes.json();
-                    gifs = bData.filter(f => f.name.toLowerCase().endsWith('.gif')).map(f => f.download_url);
+                const res = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
+                if (res.ok) {
+                    const data = await res.json();
+                    gifs = data.filter(f => f.name.toLowerCase().endsWith('.gif')).map(f => f.download_url);
+                    changeBg();
                 }
+            } catch (e) { console.log("Gifs error"); }
+        }
 
-                if (tracks.length > 0) {
-                    update();
-                    renderLists();
-                } else {
-                    document.getElementById('track-title').innerText = "Пусто";
-                }
-            } catch (e) {
-                document.getElementById('track-title').innerText = "Ошибка GitHub";
-                document.getElementById('track-author').innerText = "Проверь Public статус";
+        function changeBg() {
+            if(gifs.length > 0) {
+                document.getElementById('bg-gif').src = gifs[Math.floor(Math.random() * gifs.length)];
             }
         }
 
@@ -186,61 +179,22 @@
             }
         }
 
-        function update() {
-            if(tracks.length === 0) return;
-            const t = tracks[curIdx];
-            const parts = t.name.split(' - ');
-            document.getElementById('track-title').innerText = parts[1] || parts[0];
-            document.getElementById('track-author').innerText = parts[0] || "Unknown";
-            
-            if(gifs.length > 0) {
-                document.getElementById('bg-gif').src = gifs[Math.floor(Math.random() * gifs.length)];
-            }
-            audio.src = t.url;
-            if(isPlaying) audio.play();
+        // Функция смены трека в Саундклауде
+        function loadTrack(trackId) {
+            const iframe = document.getElementById('sc-iframe');
+            iframe.src = `https://soundcloud.com{trackId}&color=%23a020f0&auto_play=true&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false`;
+            changeBg();
+            toggleScreen(curScreen); // Возвращаемся в плеер
         }
 
-        function renderLists() {
-            const fList = document.getElementById('fav-list');
-            fList.innerHTML = "";
-            tracks.forEach((t, i) => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                div.innerHTML = `<div>${t.name}</div><div class="btn" style="width:40px; height:40px">▶</div>`;
-                div.onclick = () => { curIdx = i; isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; update(); toggleScreen('lib-screen'); };
-                fList.appendChild(div);
-            });
-        }
-
-        function playPause() {
-            if(tracks.length === 0) return;
-            isPlaying = !isPlaying;
-            document.getElementById('play-btn').innerText = isPlaying ? "Ⅱ" : "▶";
-            isPlaying ? audio.play() : audio.pause();
-        }
-
-        function next() { curIdx = (curIdx + 1) % tracks.length; update(); }
-        function prev() { curIdx = (curIdx - 1 + tracks.length) % tracks.length; update(); }
-
-        document.getElementById('search-input').oninput = (e) => {
-            const v = e.target.value.toLowerCase();
-            const list = document.getElementById('search-list');
-            list.innerHTML = "";
-            tracks.filter(t => t.name.toLowerCase().includes(v)).forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                div.innerHTML = `<div>${t.name}</div><div class="btn" style="width:40px; height:40px">▶</div>`;
-                div.onclick = () => { curIdx = tracks.indexOf(t); isPlaying = true; update(); toggleScreen('search-screen'); };
-                list.appendChild(div);
-            });
-        };
-
+        // Аватарка
         document.getElementById('prof-upload').onclick = () => document.getElementById('file-up').click();
         document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                document.getElementById('ava-img').src = ev.target.result;
-                document.getElementById('ava-img').style.display = 'block';
+                const img = document.getElementById('ava-img');
+                img.src = ev.target.result;
+                img.style.display = 'block';
                 document.getElementById('plus').style.display = 'none';
                 document.getElementById('nav-prof').style.boxShadow = "0 0 15px #A020F0";
                 document.getElementById('nav-prof').style.borderColor = "#A020F0";
@@ -248,7 +202,7 @@
             reader.readAsDataURL(e.target.files);
         };
 
-        init();
+        loadGifs();
     </script>
 </body>
 </html>
