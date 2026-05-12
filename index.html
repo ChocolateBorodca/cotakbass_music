@@ -8,22 +8,17 @@
         :root {
             --neon: #A020F0;
             --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(160, 32, 240, 0.3);
             --blur: blur(45px);
         }
 
         body, html {
             margin: 0; padding: 0; background: #000;
             color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent;
+            height: 100vh; overflow: hidden;
         }
 
-        /* GIF ФОН ИЗ ТВОЕГО GITHUB */
-        #bg-gif {
-            position: fixed; inset: 0; width: 100%; height: 100%;
-            object-fit: cover; z-index: -2; opacity: 0.5;
-            transition: opacity 1.5s ease;
-        }
+        /* GIF ФОН */
+        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: -1; }
 
         /* НАВИГАЦИЯ */
@@ -31,154 +26,95 @@
             display: flex; justify-content: space-between; align-items: center;
             padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000;
         }
-        .logo-center {
-            font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon);
-            text-shadow: 0 0 15px var(--neon); text-transform: lowercase;
-            position: absolute; left: 50%; transform: translateX(-50%);
-        }
+        .logo-center { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); text-transform: lowercase; position: absolute; left: 50%; transform: translateX(-50%); }
 
         .btn {
             width: 52px; height: 52px; border-radius: 50%;
-            background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-            border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: white; transition: 0.3s cubic-bezier(0.15, 0, 0.2, 1);
+            background: var(--glass); backdrop-filter: var(--blur);
+            border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: white; transition: 0.3s;
         }
-        .btn:active { transform: scale(0.9); box-shadow: 0 0 20px var(--neon); }
+
+        /* ПЛЕЕР: ТВОЙ ДИЗАЙН (СВЕРХУ) */
+        .player-content { position: relative; z-index: 10; text-align: left; margin-top: 15vh; padding-left: 5%; pointer-events: none; }
+        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; }
+        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; }
+        
+        .controls { display: flex; gap: 20px; pointer-events: auto; }
+        .controls .btn { width: 65px; height: 65px; font-size: 24px; position: relative; }
+
+        /* СКРЫТЫЙ ЯНДЕКС (ПОД КНОПКАМИ) */
+        .yandex-wrapper {
+            position: absolute;
+            top: 250px; /* Подгони это число под положение своих кнопок */
+            left: 5%;
+            width: 250px; /* Узкая область только для кнопок */
+            height: 100px;
+            opacity: 0; /* ПОЛНОСТЬЮ НЕВИДИМ */
+            z-index: 5;
+            transform: scale(2); /* Увеличиваем, чтобы кнопки Яндекса совпали с твоими */
+            transform-origin: top left;
+        }
 
         /* ЭКРАНЫ */
-        .screen {
-            position: fixed; inset: 0; display: none; 
-            flex-direction: column; padding: 110px 25px 25px;
-            background: rgba(0,0,0,0.95); backdrop-filter: var(--blur); z-index: 4000;
-        }
+        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.95); backdrop-filter: var(--blur); z-index: 4000; }
         .screen.active { display: flex; }
 
-        /* ПЛЕЕР */
-        .player-container {
-            width: 100%; max-width: 500px; margin: 5vh auto 0;
-            border-radius: 25px; overflow: hidden;
-            background: var(--glass); border: 1px solid var(--border);
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
-        }
-
-        /* ПРОФИЛЬ (КРУГ В ЦЕНТРЕ) */
-        .profile-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .profile-circle {
-            width: 180px; height: 180px; border-radius: 50%;
-            border: 2px solid var(--neon); background: var(--glass);
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; box-shadow: 0 0 30px rgba(160, 32, 240, 0.2);
-            font-size: 50px; color: var(--neon); cursor: pointer; position: relative;
-        }
-        .profile-circle img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
-        
-        .section-title { font-size: 14px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-align: center; margin-bottom: 30px; }
+        .profile-circle { width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); margin: 10vh auto; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 50px; color: var(--neon); }
+        .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body>
 
-    <img id="bg-gif" src="">
+    <img id="bg-gif" src="https://giphy.com">
     <div class="overlay"></div>
 
     <div class="nav">
-        <!-- Левая кнопка ( Favorites ) -->
-        <div class="btn" onclick="toggleScreen('lib-screen')">☰</div>
+        <div class="btn" onclick="toggleScreen('lib')">☰</div>
         <div class="logo-center">cotakbass</div>
         <div style="display: flex; gap: 10px;">
-            <!-- Правые кнопки ( Profile | Search ) -->
-            <div class="btn" id="nav-prof" onclick="toggleScreen('prof-screen')">👤</div>
-            <div class="btn" onclick="toggleScreen('search-screen')">?</div>
+            <div class="btn" onclick="toggleScreen('prof')">👤</div>
+            <div class="btn">?</div>
         </div>
     </div>
 
-    <!-- ГЛАВНЫЙ ЭКРАН -->
-    <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
-        <div class="player-container">
-            <!-- ТВОЙ ПЛЕЕР ЯНДЕКСА -->
-            <iframe frameborder="0" style="border:none;width:100%;height:550px;" width="100%" height="550" src="https://music.yandex.ru/iframe/album/36949141"></iframe>
+    <!-- ТВОЙ ВИЗУАЛЬНЫЙ ПЛЕЕР -->
+    <div class="player-content">
+        <div class="track-title">мрачные треды</div>
+        <div class="track-author">тёмный принц</div>
+        <div class="controls">
+            <div class="btn">❮</div>
+            <div class="btn" style="border-color: var(--neon)">▶</div>
+            <div class="btn">❯</div>
         </div>
     </div>
 
-    <!-- ФАВОРИТЫ -->
-    <div id="lib-screen" class="screen">
-        <div class="section-title">favorites</div>
-        <div style="text-align: center; opacity: 0.5; margin-top: 50px;">Используйте плеер Яндекс для управления списком</div>
+    <!-- НЕВИДИМЫЙ ДВИЖОК ЯНДЕКСА -->
+    <div class="yandex-wrapper">
+        <iframe frameborder="0" style="border:none;width:100%;height:100px;" src="https://yandex.ru"></iframe>
     </div>
 
-    <!-- ПОИСК -->
-    <div id="search-screen" class="screen">
-        <div class="section-title">search</div>
-        <div style="padding: 20px; background: var(--glass); border-radius: 20px; border: 1px solid var(--border); text-align: center;">
-            <p>Вся мировая база доступна внутри плеера Яндекс.</p>
-        </div>
-    </div>
-
-    <!-- ПРОФИЛЬ -->
-    <div id="prof-screen" class="screen">
-        <div class="profile-container">
-            <div class="profile-circle" id="prof-upload">
-                <span id="plus">+</span>
-                <img id="ava-img" style="display:none">
-            </div>
-        </div>
+    <div id="prof" class="screen">
+        <div class="profile-circle" id="prof-btn">+<img id="ava-img" style="display:none"></div>
     </div>
 
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
     <script>
-        const USER = "ChocolateBorodca";
-        const REPO = "cotakbass_music";
-
-        let gifs = [];
-
-        async function loadGifs() {
-            try {
-                const res = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
-                if (res.ok) {
-                    const data = await res.json();
-                    gifs = data.filter(f => f.name.toLowerCase().endsWith('.gif')).map(f => f.download_url);
-                    if(gifs.length > 0) changeBg();
-                }
-            } catch (e) {
-                document.getElementById('bg-gif').src = "https://giphy.com";
-            }
-        }
-
-        function changeBg() {
-            if(gifs.length > 0) {
-                document.getElementById('bg-gif').src = gifs[Math.floor(Math.random() * gifs.length)];
-            }
-        }
-
-        let curScreen = 'player-screen';
         function toggleScreen(id) {
-            const screen = document.getElementById(id);
-            if (curScreen === id) {
-                screen.classList.remove('active');
-                curScreen = 'player-screen';
-            } else {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                screen.classList.add('active');
-                curScreen = id;
-            }
-            changeBg();
+            const s = document.getElementById(id);
+            s.classList.toggle('active');
         }
 
-        document.getElementById('prof-upload').onclick = () => document.getElementById('file-up').click();
+        document.getElementById('prof-btn').onclick = () => document.getElementById('file-up').click();
         document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                const img = document.getElementById('ava-img');
-                img.src = ev.target.result;
-                img.style.display = 'block';
-                document.getElementById('plus').style.display = 'none';
-                document.getElementById('nav-prof').style.boxShadow = "0 0 15px #A020F0";
-                document.getElementById('nav-prof').style.border = "2px solid #A020F0";
+                document.getElementById('ava-img').src = ev.target.result;
+                document.getElementById('ava-img').style.display = 'block';
             };
             reader.readAsDataURL(e.target.files);
         };
-
-        loadGifs();
     </script>
 </body>
 </html>
