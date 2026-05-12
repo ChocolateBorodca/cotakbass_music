@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>cotakbass music</title>
+    <title>cotakbass music | VPN REQUIRED</title>
+    <!-- Прямое подключение SoundCloud API -->
+    <script src="https://soundcloud.com"></script>
     <style>
         :root {
             --neon: #A020F0;
-            --glass: rgba(255, 255, 255, 0.06);
+            --glass: rgba(255, 255, 255, 0.05);
             --border: rgba(160, 32, 240, 0.3);
             --blur: blur(45px);
         }
 
         body, html {
             margin: 0; padding: 0; background: #000;
-            color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            color: white; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent;
         }
 
-        /* GIF ФОН ИЗ GITHUB */
+        /* GIF ФОН (ПРЯМО ИЗ GITHUB) */
         #bg-gif {
             position: fixed; inset: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: -2; opacity: 0.5; transition: opacity 1.5s ease;
@@ -30,7 +32,7 @@
             display: flex; justify-content: space-between; align-items: center;
             padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 2000;
         }
-        .logo-center {
+        .logo-neon {
             font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon);
             text-shadow: 0 0 15px var(--neon); text-transform: lowercase;
             position: absolute; left: 50%; transform: translateX(-50%);
@@ -42,7 +44,7 @@
             border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: white; transition: 0.4s cubic-bezier(0.15, 0, 0.2, 1);
         }
-        .btn:active { transform: scale(0.9); }
+        .btn:active { transform: scale(0.9); box-shadow: 0 0 20px var(--neon); }
 
         /* ЭКРАНЫ */
         .screen {
@@ -54,16 +56,17 @@
 
         /* ПЛЕЕР (ТЕКСТ СЛЕВА) */
         .player-content { text-align: left; margin-top: 15vh; padding-left: 5%; }
-        .track-title { font-size: 40px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; min-height: 90px; overflow: hidden; }
-        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 50px; opacity: 0.8; }
-        
+        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; min-height: 100px; }
+        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; opacity: 0.8; }
         .controls { display: flex; gap: 20px; }
         .controls .btn { width: 65px; height: 65px; font-size: 24px; }
 
-        /* ПОИСК */
+        /* СКРЫТЫЙ ПЛЕЕР (ENGINE) */
+        #sc-player { position: absolute; visibility: hidden; pointer-events: none; top: -5000px; }
+
         .search-box {
             width: 100%; background: var(--glass); border: 1px solid var(--border);
-            border-radius: 22px; padding: 15px 20px; box-sizing: border-box;
+            border-radius: 20px; padding: 15px 20px; box-sizing: border-box;
             display: flex; align-items: center; position: relative;
         }
         .search-box input { background: none; border: none; color: white; width: 85%; font-size: 18px; outline: none; }
@@ -89,20 +92,20 @@
 
     <div class="nav">
         <div class="btn" onclick="toggleScreen('lib-screen')">☰</div>
-        <div class="logo-center">cotakbass</div>
+        <div class="logo-neon">cotakbass</div>
         <div style="display: flex; gap: 10px;">
             <div class="btn" id="nav-prof" onclick="toggleScreen('prof-screen')">👤</div>
             <div class="btn" onclick="toggleScreen('search-screen')">?</div>
         </div>
     </div>
 
-    <!-- СКРЫТЫЙ ПЛЕЕР (ДЛЯ РАБОТЫ В ФОНЕ) -->
-    <iframe id="sc-widget" src="https://soundcloud.com" style="display:none;"></iframe>
+    <!-- SOUNDCLOUD ПЛЕЙЛИСТ -->
+    <iframe id="sc-player" src="https://soundcloud.com"></iframe>
 
     <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
         <div class="player-content">
-            <div id="track-title" class="track-title">Синхронизация...</div>
-            <div id="track-author" class="track-author"> SoundCloud Engine</div>
+            <div id="track-title" class="track-title">Включите VPN</div>
+            <div id="track-author" class="track-author">для загрузки музыки</div>
             <div class="controls">
                 <div class="btn" onclick="prev()">❮</div>
                 <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
@@ -112,7 +115,7 @@
     </div>
 
     <div id="lib-screen" class="screen">
-        <div style="text-align:center; color:var(--neon); letter-spacing:5px; font-size:11px; margin-bottom:30px;">FAVORITES</div>
+        <div style="text-align:center; color:var(--neon); letter-spacing:5px; font-size:12px; margin-bottom:30px;">FAVORITES</div>
         <div class="list" id="fav-list"></div>
     </div>
 
@@ -126,39 +129,37 @@
 
     <div id="prof-screen" class="screen">
         <div class="profile-container">
-            <div class="profile-circle" id="prof-upload">
+            <div class="profile-circle" id="prof-up">
                 <span id="plus" style="font-size:50px; color:var(--neon);">+</span>
                 <img id="ava-img" style="display:none">
             </div>
         </div>
     </div>
 
-    <input type="file" id="file-up" style="display:none" accept="image/*">
+    <input type="file" id="file-input" style="display:none" accept="image/*">
 
-    <!-- SoundCloud API Script -->
-    <script src="https://soundcloud.com"></script>
     <script>
         const USER = "ChocolateBorodca";
         const REPO = "cotakbass_music";
-        const widget = SC.Widget(document.getElementById('sc-widget'));
-        
+
+        const widget = SC.Widget(document.getElementById('sc-player'));
         let tracks = [], gifs = [], isPlaying = false, curScreen = 'player-screen';
 
-        // 1. Загрузка GIF из твоего репозитория (через прокси, чтобы не висло)
+        // Загрузка GIF фонов
         async function loadGifs() {
             try {
-                const res = await fetch(`https://allorigins.win{encodeURIComponent(`https://github.com{USER}/${REPO}/contents/bg`)}`);
+                const res = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
                 const data = await res.json();
-                gifs = data.filter(f => f.name.endsWith('.gif')).map(f => `https://jsdelivr.net{USER}/${REPO}@main/bg/${f.name}`);
+                gifs = data.filter(f => f.name.endsWith('.gif')).map(f => f.download_url);
                 if(gifs.length > 0) changeBg();
             } catch (e) { console.log("Gifs error"); }
         }
 
         function changeBg() {
-            if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[Math.floor(Math.random() * gifs.length)];
+            if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[Math.floor(Math.random()*gifs.length)];
         }
 
-        // 2. Инициализация SoundCloud
+        // Инициализация SoundCloud (только через VPN)
         widget.bind(SC.Widget.Events.READY, () => {
             widget.getSounds((sounds) => {
                 tracks = sounds;
@@ -187,13 +188,12 @@
         function prev() { widget.prev(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 800); }
 
         function toggleScreen(id) {
-            const screen = document.getElementById(id);
             if (curScreen === id) {
-                screen.classList.remove('active');
+                document.getElementById(id).classList.remove('active');
                 curScreen = 'player-screen';
             } else {
                 document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                screen.classList.add('active');
+                document.getElementById(id).classList.add('active');
                 curScreen = id;
             }
         }
@@ -210,7 +210,6 @@
             });
         }
 
-        // Поиск
         document.getElementById('search-input').oninput = (e) => {
             const v = e.target.value.toLowerCase();
             const list = document.getElementById('search-list');
@@ -225,12 +224,12 @@
             });
         };
 
-        // Аватарка
-        document.getElementById('prof-upload').onclick = () => document.getElementById('file-up').click();
-        document.getElementById('file-up').onchange = (e) => {
+        document.getElementById('prof-up').onclick = () => document.getElementById('file-input').click();
+        document.getElementById('file-input').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                document.getElementById('ava-img').src = ev.target.result; img.style.display = 'block';
+                const img = document.getElementById('ava-img');
+                img.src = ev.target.result; img.style.display = 'block';
                 document.getElementById('plus').style.display = 'none';
                 document.getElementById('nav-prof').style.boxShadow = "0 0 15px #A020F0";
                 document.getElementById('nav-prof').style.border = "2px solid #A020F0";
