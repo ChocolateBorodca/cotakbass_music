@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
-    <!-- ВСТРОЕННАЯ БИБЛИОТЕКА (CDN ОБХОД) -->
-    <script src="https://unpkg.com"></script>
+    <!-- ПОДКЛЮЧАЕМ СВОЙ ФАЙЛ, КОТОРЫЙ ТЫ ТОЛЬКО ЧТО СОЗДАЛ -->
+    <script src="supabase.js"></script>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); }
         body { margin: 0; background: #000; color: white; font-family: sans-serif; padding-bottom: 100px; }
         .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); text-align: center; }
         .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-transform: lowercase; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 20px; }
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px); }
         audio { width: 100%; height: 35px; margin-top: 10px; filter: invert(1); }
         .fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; border: none; z-index: 5000; }
         .modal { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; padding: 40px 25px; z-index: 6000; }
@@ -36,7 +36,7 @@
         <label class="file-label" for="fInp" id="fStatus">ВЫБРАТЬ MP3 ФАЙЛ</label>
         <input type="file" id="fInp" accept="audio/*" style="display:none">
         <button class="btn-post" id="upBtn" onclick="handleSend()">Опубликовать</button>
-        <div id="loader">ПОДОЖДИТЕ, ИДЕТ ЗАГРУЗКА...</div>
+        <div id="loader">ТРЕК ЛЕТИТ В ОБЛАКО...</div>
         <p onclick="closeModal()" style="text-align:center; opacity:0.4; margin-top:20px; cursor:pointer">отмена</p>
     </div>
 
@@ -50,7 +50,7 @@
                 sb = supabase.createClient(S_URL, S_KEY);
                 loadFeed();
             } else {
-                alert("Ошибка: серверы Supabase недоступны. Попробуй включить VPN.");
+                alert("Библиотека все еще не загружена. Проверь наличие файла supabase.js на GitHub!");
             }
         }
 
@@ -58,12 +58,12 @@
         function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
         document.getElementById('fInp').onchange = function() {
-            if(this.files[0]) document.getElementById('fStatus').innerText = "ФАЙЛ: " + this.files[0].name;
+            if(this.files[0]) document.getElementById('fStatus').innerText = "ВЫБРАН: " + this.files[0].name;
         };
 
         async function loadFeed() {
             try {
-                const { data, error } = await sb.from('posts').select('*').order('id', { ascending: false });
+                const { data } = await sb.from('posts').select('*').order('id', { ascending: false });
                 if (data) {
                     const feed = document.getElementById('feed');
                     feed.innerHTML = "";
@@ -71,7 +71,7 @@
                         feed.innerHTML += `<div class="card"><small style="color:var(--neon)">By: ${item.author}</small><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
                     });
                 }
-            } catch (e) {}
+            } catch (e) { console.log("Feed load failed"); }
         }
 
         async function handleSend() {
@@ -79,17 +79,22 @@
             const u = document.getElementById('uName').value;
             const f = document.getElementById('fInp').files[0];
 
-            if (!t || !u || !f) return alert("Заполни всё!");
+            if (!t || !u || !f) return alert("Заполни всё и выбери файл!");
+            if (!sb) return alert("База не инициализирована!");
 
             document.getElementById('upBtn').style.display = 'none';
             document.getElementById('loader').style.display = 'block';
 
             try {
                 const fName = Date.now() + ".mp3";
+                // Загрузка
                 const { error: upErr } = await sb.storage.from('music').upload(fName, f);
                 if (upErr) throw upErr;
 
+                // Получение URL
                 const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fName);
+                
+                // Запись в базу
                 const { error: dbErr } = await sb.from('posts').insert([{ title: t, author: u, link: publicUrl }]);
                 if (dbErr) throw dbErr;
 
@@ -101,8 +106,7 @@
             }
         }
 
-        // Запуск
-        setTimeout(init, 1000);
+        setTimeout(init, 500);
     </script>
 </body>
 </html>
