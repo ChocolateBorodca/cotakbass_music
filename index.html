@@ -5,42 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass</title>
     <style>
-        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.08); --blur: blur(40px); }
+        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.08); --blur: blur(45px); }
         body, html { margin: 0; padding: 0; background: #000; color: white; font-family: -apple-system, system-ui, sans-serif; height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
         
-        /* Фон */
-        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; transition: 1s; }
-        .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7), #000); z-index: -1; }
+        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; }
+        .overlay { position: fixed; inset: 0; background: #000; opacity: 0.8; z-index: -1; }
 
-        /* Навигация */
         .nav { display: flex; justify-content: space-between; align-items: center; padding: 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000; }
         .logo { font-size: 13px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); position: absolute; left: 50%; transform: translateX(-50%); text-transform: lowercase; }
 
-        .btn { width: 52px; height: 52px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .btn:active { transform: scale(0.85); background: rgba(160, 32, 240, 0.2); }
+        .btn { width: 52px; height: 52px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: 0.3s; }
 
-        /* Интерфейс */
-        .player-ui { position: relative; margin-top: 20vh; padding-left: 7%; z-index: 100; transition: 0.5s; }
-        .t-title { font-size: 44px; font-weight: 900; letter-spacing: -2px; line-height: 1.1; margin-bottom: 5px; min-height: 50px; text-transform: lowercase; }
-        .t-artist { font-size: 18px; color: var(--neon); opacity: 0.8; margin-bottom: 50px; font-weight: 300; }
+        .player-ui { position: relative; margin-top: 25vh; padding-left: 10%; z-index: 100; }
+        .t-title { font-size: 48px; font-weight: 900; letter-spacing: -2px; margin-bottom: 5px; text-transform: lowercase; }
+        .t-artist { font-size: 18px; color: var(--neon); margin-bottom: 50px; opacity: 0.8; }
         .controls { display: flex; gap: 20px; }
         .controls .btn { width: 70px; height: 70px; font-size: 26px; }
 
-        /* Экраны */
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.96); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); z-index: 4000; }
+        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.98); backdrop-filter: var(--blur); z-index: 4000; }
         .screen.active { display: flex; }
         
-        /* Поиск */
-        .search-box { width: 100%; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 25px; padding: 18px 25px; display: flex; align-items: center; box-sizing: border-box; }
-        .search-box input { background: none; border: none; color: white; width: 100%; font-size: 19px; outline: none; }
-        .res-list { overflow-y: auto; flex-grow: 1; margin-top: 25px; }
-        .item { padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-radius: 15px; transition: 0.2s; }
-        .item:active { background: rgba(160, 32, 240, 0.1); }
+        .search-box { width: 100%; background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 18px; display: flex; align-items: center; }
+        .search-box input { background: none; border: none; color: white; width: 100%; font-size: 18px; outline: none; }
+        .item { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 
-        /* Профиль */
-        .profile-wrap { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .circle { width: 200px; height: 200px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); display: flex; align-items: center; justify-content: center; font-size: 60px; color: var(--neon); overflow: hidden; box-shadow: 0 0 40px rgba(160, 32, 240, 0.2); cursor: pointer; }
-        .circle img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-circle { width: 200px; height: 200px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); display: flex; align-items: center; justify-content: center; font-size: 60px; color: var(--neon); overflow: hidden; margin: 10vh auto; }
+        .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body>
@@ -51,70 +41,57 @@
     <div class="nav">
         <div class="btn" onclick="toggleScreen('lib-screen')">☰</div>
         <div class="logo">cotakbass</div>
-        <div style="display: flex; gap: 12px;">
+        <div style="display: flex; gap: 10px;">
             <div class="btn" id="nav-prof" onclick="toggleScreen('prof-screen')">👤</div>
             <div class="btn" onclick="toggleScreen('search-screen')">?</div>
         </div>
     </div>
 
-    <!-- ПЛЕЕР -->
-    <div class="player-ui" id="player-main">
-        <div id="m-title" class="t-title">напиши хуйню</div>
-        <div id="m-artist" class="t-artist">в поиске трек</div>
+    <div class="player-ui">
+        <div id="m-title" class="t-title">cotakbass</div>
+        <div id="m-artist" class="t-artist">нажми на ? и выбери трек</div>
         <div class="controls">
-            <div class="btn" onclick="prev()">❮</div>
-            <div class="btn" id="play-btn" style="border-color: var(--neon); color: var(--neon);" onclick="togglePlay()">▶</div>
+            <div class="btn" onclick="next()">❮</div>
+            <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="togglePlay()">▶</div>
             <div class="btn" onclick="next()">❯</div>
         </div>
     </div>
 
     <audio id="audio-engine"></audio>
 
-    <!-- ЭКРАНЫ -->
     <div id="search-screen" class="screen">
-        <div class="search-box"><input type="text" id="s-in" placeholder="напиши хуйню..." autocomplete="off"></div>
-        <div class="res-list" id="s-res"></div>
+        <div class="search-box"><input type="text" placeholder="напиши хуйню (например: kizaru)"></div>
+        <div id="res" style="overflow-y:auto; margin-top:20px;">
+            <!-- ПРЕДУСТАНОВЛЕННЫЕ ТРЕКИ ДЛЯ ПРОВЕРКИ ЗВУКА -->
+            <div class="item" onclick="play('https://soundhelix.com', 'test track 1', 'cotakbass')">
+                <div><b>test track 1</b><br><small>system</small></div> <div class="btn" style="width:40px; height:40px">▶</div>
+            </div>
+             <div class="item" onclick="play('https://soundhelix.com', 'test track 2', 'cotakbass')">
+                <div><b>test track 2</b><br><small>system</small></div> <div class="btn" style="width:40px; height:40px">▶</div>
+            </div>
+        </div>
     </div>
 
     <div id="prof-screen" class="screen">
-        <div class="profile-wrap"><div class="circle" id="c-up">+<img id="a-img" style="display:none"></div></div>
+        <div class="profile-circle" onclick="document.getElementById('f').click()">+<img id="a-img" style="display:none"></div>
+        <input type="file" id="f" style="display:none" accept="image/*">
     </div>
 
-    <div id="lib-screen" class="screen"><div style="text-align:center; color:var(--neon); letter-spacing:10px; font-weight:900;">FAVORITES</div></div>
+    <div id="lib-screen" class="screen"><div style="text-align:center; color:var(--neon); letter-spacing:10px;">FAVORITES</div></div>
 
     <script>
         const audio = document.getElementById('audio-engine');
         const playBtn = document.getElementById('play-btn');
         let isPlaying = false;
-        let queue = [];
-        let curIdx = 0;
 
-        // ПОИСК (Apple Engine - Работает в РФ без VPN)
-        document.getElementById('s-in').oninput = async (e) => {
-            const q = e.target.value;
-            if(q.length < 3) return;
-            try {
-                const res = await fetch(`https://apple.com{encodeURIComponent(q)}&media=music&limit=20`);
-                const data = await res.json();
-                const list = document.getElementById('s-res');
-                list.innerHTML = "";
-                data.results.forEach((t, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'item';
-                    div.innerHTML = `<div><b>${t.trackName.toLowerCase()}</b><br><small style="opacity:0.5">${t.artistName.toLowerCase()}</small></div> <div class="btn" style="width:40px; height:40px">▶</div>`;
-                    div.onclick = () => { queue = data.results; curIdx = i; play(t); toggleScreen('search-screen'); };
-                    list.appendChild(div);
-                });
-            } catch(err) {}
-        };
-
-        function play(t) {
-            audio.src = t.previewUrl;
-            document.getElementById('m-title').innerText = t.trackName.toLowerCase();
-            document.getElementById('m-artist').innerText = t.artistName.toLowerCase();
+        function play(url, title, artist) {
+            audio.src = url;
             audio.play();
-            isPlaying = true;
+            document.getElementById('m-title').innerText = title;
+            document.getElementById('m-artist').innerText = artist;
             playBtn.innerText = "Ⅱ";
+            isPlaying = true;
+            toggleScreen('search-screen');
         }
 
         function togglePlay() {
@@ -124,33 +101,22 @@
             isPlaying = !isPlaying;
         }
 
-        function next() { if(queue.length > 0) { curIdx = (curIdx + 1) % queue.length; play(queue[curIdx]); } }
-        function prev() { if(queue.length > 0) { curIdx = (curIdx - 1 + queue.length) % queue.length; play(queue[curIdx]); } }
-
         function toggleScreen(id) {
             const s = document.getElementById(id);
-            const active = s.classList.contains('active');
+            const isAct = s.classList.contains('active');
             document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-            if(!active) s.classList.add('active');
+            if(!isAct) s.classList.add('active');
         }
 
-        // Аватарка
-        document.getElementById('c-up').onclick = () => {
-            const inp = document.createElement('input');
-            inp.type = 'file'; inp.accept = 'image/*';
-            inp.onchange = (e) => {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const img = document.getElementById('a-img');
-                    img.src = ev.target.result; img.style.display = 'block';
-                    document.getElementById('nav-prof').style.boxShadow = "0 0 15px #A020F0";
-                };
-                reader.readAsDataURL(e.target.files[0]);
+        document.getElementById('f').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('a-img').src = ev.target.result;
+                document.getElementById('a-img').style.display = 'block';
+                document.getElementById('nav-prof').style.boxShadow = "0 0 15px var(--neon)";
             };
-            inp.click();
+            reader.readAsDataURL(e.target.files);
         };
-
-        audio.onended = () => next();
     </script>
 </body>
 </html>
