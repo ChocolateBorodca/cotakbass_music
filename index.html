@@ -3,38 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>cotakbass</title>
+    <title>cotakbass platform</title>
+    <!-- Подключаем Supabase SDK -->
+    <script src="https://jsdelivr.net"></script>
     <style>
-        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.08); --blur: blur(45px); }
-        body, html { margin: 0; padding: 0; background: #000; color: white; font-family: -apple-system, system-ui, sans-serif; height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
+        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; }
         
-        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; transition: 1s; }
-        .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, transparent, #000); z-index: -1; }
+        /* Фон */
+        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.3; }
+        .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7), #000); z-index: -1; }
 
-        .nav { display: flex; justify-content: space-between; align-items: center; padding: 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000; }
-        .logo { font-size: 13px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); position: absolute; left: 50%; transform: translateX(-50%); text-transform: lowercase; }
+        /* Навигация */
+        .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); backdrop-filter: var(--blur); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; }
+        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 10px var(--neon); text-transform: lowercase; }
 
-        .btn { width: 52px; height: 52px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: 0.3s; }
-        .btn:active { transform: scale(0.85); background: rgba(160, 32, 240, 0.2); }
-
-        .player-ui { position: relative; margin-top: 25vh; padding-left: 10%; z-index: 100; opacity: 1; transition: 0.5s; }
-        .t-title { font-size: 48px; font-weight: 900; letter-spacing: -2px; margin-bottom: 5px; text-transform: lowercase; line-height: 1; }
-        .t-artist { font-size: 18px; color: var(--neon); margin-bottom: 50px; opacity: 0.8; }
-        .controls { display: flex; gap: 20px; }
-        .controls .btn { width: 70px; height: 70px; font-size: 26px; border-color: var(--neon); }
-
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.98); backdrop-filter: var(--blur); z-index: 4000; }
-        .screen.active { display: flex; }
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
         
-        .search-box { width: 100%; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 18px 25px; display: flex; align-items: center; box-sizing: border-box; }
-        .search-box input { background: none; border: none; color: white; width: 100%; font-size: 18px; outline: none; }
+        /* Карточка трека */
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); animation: fadeIn 0.5s ease forwards; }
+        .card h3 { margin: 0 0 8px 0; font-size: 22px; font-weight: 800; letter-spacing: -1px; }
+        .card .user-tag { font-size: 11px; color: var(--neon); opacity: 0.7; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: block; }
         
-        .res-list { overflow-y: auto; flex-grow: 1; margin-top: 20px; }
-        .item { padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        audio { width: 100%; height: 35px; border-radius: 10px; filter: invert(1) hue-rotate(180deg); }
 
-        .profile-wrap { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .circle { width: 200px; height: 200px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); display: flex; align-items: center; justify-content: center; font-size: 60px; color: var(--neon); overflow: hidden; box-shadow: 0 0 40px rgba(160, 32, 240, 0.2); }
-        .circle img { width: 100%; height: 100%; object-fit: cover; }
+        /* Кнопка + */
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; box-shadow: 0 0 30px rgba(160, 32, 240, 0.4); z-index: 2000; border: none; font-weight: 800; }
+
+        /* Модальное окно */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.96); display: none; flex-direction: column; padding: 60px 25px; z-index: 3000; backdrop-filter: blur(20px); }
+        .modal.active { display: flex; }
+        .modal h2 { margin-bottom: 40px; text-align: center; letter-spacing: -1px; }
+        
+        input { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 18px; color: white; margin-bottom: 15px; outline: none; font-size: 16px; }
+        input:focus { border-color: var(--neon); }
+        
+        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -42,117 +48,81 @@
     <img id="bg-gif" src="https://giphy.com">
     <div class="overlay"></div>
 
-    <div class="nav">
-        <div class="btn" onclick="toggleScreen('lib-screen')">☰</div>
-        <div class="logo">cotakbass</div>
-        <div style="display: flex; gap: 10px;">
-            <div class="btn" id="nav-prof" onclick="toggleScreen('prof-screen')">👤</div>
-            <div class="btn" onclick="toggleScreen('search-screen')">?</div>
-        </div>
+    <div class="nav"><div class="logo">cotakbass</div></div>
+
+    <div class="container" id="feed">
+        <p style="text-align: center; opacity: 0.3; margin-top: 50px;">загрузка треков...</p>
     </div>
 
-    <!-- ОСНОВНОЙ ПЛЕЕР -->
-    <div class="player-ui" id="player-main">
-        <div id="m-title" class="t-title">cotakbass</div>
-        <div id="m-artist" class="t-artist">найди трек через "?"</div>
-        <div class="controls">
-            <div class="btn" onclick="prev()">❮</div>
-            <div id="play-btn" class="btn" onclick="togglePlay()">▶</div>
-            <div class="btn" onclick="next()">❯</div>
-        </div>
+    <button class="fab" onclick="toggleModal()">+</button>
+
+    <div class="modal" id="postModal">
+        <h2>Опубликовать</h2>
+        <input type="text" id="trackTitle" placeholder="Название трека">
+        <input type="text" id="userName" placeholder="Твой ник">
+        <input type="text" id="trackUrl" placeholder="Прямая ссылка на MP3">
+        <button class="btn-post" onclick="postTrack()">Разместить трек</button>
+        <p onclick="toggleModal()" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
-
-    <audio id="audio-engine" crossorigin="anonymous"></audio>
-
-    <!-- ПОИСК -->
-    <div id="search-screen" class="screen">
-        <div class="search-box">
-            <input type="text" id="search-input" placeholder="напиши хуйню (на английском)..." autocomplete="off">
-        </div>
-        <div class="res-list" id="res-list">
-            <div style="text-align:center; opacity:0.3; margin-top:50px;">введите название (например: rock, bass, dark)</div>
-        </div>
-    </div>
-
-    <div id="prof-screen" class="screen">
-        <div class="profile-wrap"><div class="circle" id="c-up">+<img id="a-img" style="display:none"></div></div>
-    </div>
-
-    <div id="lib-screen" class="screen"><div style="text-align:center; color:var(--neon); letter-spacing:10px; font-weight:900;">FAVORITES</div></div>
 
     <script>
-        const audio = document.getElementById('audio-engine');
-        const playBtn = document.getElementById('play-btn');
-        let isPlaying = false;
-        let queue = [];
-        let curIdx = 0;
+        // Твои данные из Supabase
+        const SUPABASE_URL = "https://supabase.co";
+        const SUPABASE_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; // anon key
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ПОИСК ПО МИРОВОЙ БАЗЕ (Jamendo API)
-        document.getElementById('search-input').oninput = async (e) => {
-            const q = e.target.value;
-            if(q.length < 3) return;
-            try {
-                const res = await fetch(`https://jamendo.com{encodeURIComponent(q)}`);
-                const data = await res.json();
-                const list = document.getElementById('res-list');
-                list.innerHTML = "";
-                
-                data.results.forEach((t, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'item';
-                    div.innerHTML = `<div><b>${t.name.toLowerCase()}</b><br><small style="opacity:0.5">${t.artist_name.toLowerCase()}</small></div><div class="btn" style="width:40px; height:40px">▶</div>`;
-                    div.onclick = () => { queue = data.results; curIdx = i; playTrack(t); toggleScreen('search-screen'); };
-                    list.appendChild(div);
-                });
-            } catch(err) { console.log("Search error"); }
-        };
+        function toggleModal() {
+            document.getElementById('postModal').classList.toggle('active');
+        }
 
-        function playTrack(t) {
-            audio.src = t.audio;
-            audio.load();
-            audio.play().then(() => {
-                isPlaying = true;
-                playBtn.innerText = "Ⅱ";
-            }).catch(e => {
-                alert("Нажмите кнопку PLAY в центре для активации звука");
+        // Загрузка ленты
+        async function loadFeed() {
+            const { data, error } = await _supabase.from('posts').select('*').order('id', { ascending: false });
+            if (error) return console.error(error);
+
+            const feed = document.getElementById('feed');
+            feed.innerHTML = "";
+            
+            if (data.length === 0) {
+                feed.innerHTML = '<p style="text-align:center; opacity:0.3; margin-top:50px;">Здесь пока пусто. Будь первым!</p>';
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <span class="user-tag">Upload by: ${item.author}</span>
+                    <h3>${item.title}</h3>
+                    <audio controls src="${item.link}"></audio>
+                `;
+                feed.appendChild(card);
             });
-            document.getElementById('m-title').innerText = t.name.toLowerCase();
-            document.getElementById('m-artist').innerText = t.artist_name.toLowerCase();
         }
 
-        function togglePlay() {
-            if(!audio.src) return;
-            if(isPlaying) { audio.pause(); playBtn.innerText = "▶"; }
-            else { audio.play(); playBtn.innerText = "Ⅱ"; }
-            isPlaying = !isPlaying;
+        // Публикация
+        async function postTrack() {
+            const title = document.getElementById('trackTitle').value;
+            const author = document.getElementById('userName').value;
+            const link = document.getElementById('trackUrl').value;
+
+            if (!title || !author || !link) return alert("Заполни все поля!");
+
+            const { error } = await _supabase.from('posts').insert([{ title, author, link }]);
+
+            if (error) {
+                alert("Ошибка: убедись, что RLS в Supabase выключен для таблицы posts.");
+                console.error(error);
+            } else {
+                toggleModal();
+                loadFeed();
+                // Очистка полей
+                document.getElementById('trackTitle').value = "";
+                document.getElementById('userName').value = "";
+                document.getElementById('trackUrl').value = "";
+            }
         }
 
-        function next() { if(queue.length > 0) { curIdx = (curIdx + 1) % queue.length; playTrack(queue[curIdx]); } }
-        function prev() { if(queue.length > 0) { curIdx = (curIdx - 1 + queue.length) % queue.length; playTrack(queue[curIdx]); } }
-
-        function toggleScreen(id) {
-            const s = document.getElementById(id);
-            const active = s.classList.contains('active');
-            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-            if(!active) s.classList.add('active');
-        }
-
-        // Аватарка
-        document.getElementById('c-up').onclick = () => {
-            const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
-            inp.onchange = (e) => {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    document.getElementById('a-img').src = ev.target.result;
-                    document.getElementById('a-img').style.display = 'block';
-                    document.getElementById('nav-prof').style.boxShadow = "0 0 15px var(--neon)";
-                };
-                reader.readAsDataURL(e.target.files);
-            };
-            inp.click();
-        };
-
-        audio.onended = () => next();
+        loadFeed();
     </script>
 </body>
 </html>
