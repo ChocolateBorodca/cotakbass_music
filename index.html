@@ -8,7 +8,7 @@
         :root {
             --neon: #A020F0;
             --glass: rgba(255, 255, 255, 0.05);
-            --blur: blur(45px);
+            --blur: blur(40px);
         }
 
         body, html {
@@ -17,8 +17,9 @@
             height: 100vh; overflow: hidden;
         }
 
-        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: -1; }
+        /* GIF ФОН */
+        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: -1; }
 
         /* НАВИГАЦИЯ */
         .nav {
@@ -34,39 +35,52 @@
             cursor: pointer; color: white; transition: 0.3s;
         }
 
-        /* ТВОЙ ДИЗАЙН (ВИЗУАЛ) */
-        .player-content {
+        /* ПЛЕЕР: ТВОЙ ВИЗУАЛ */
+        .main-player {
             position: relative;
-            margin-top: 20vh;
+            margin-top: 15vh;
             padding-left: 5%;
-            z-index: 10;
+            z-index: 100;
         }
 
-        .album-label { font-size: 14px; color: var(--neon); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
-        .track-title { font-size: 44px; font-weight: 800; letter-spacing: -2px; line-height: 1; margin-bottom: 5px; }
-        .artist-name { font-size: 18px; opacity: 0.6; margin-bottom: 60px; }
+        .album-tag { font-size: 14px; color: var(--neon); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
+        .track-title { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 5px; }
+        .artist-name { font-size: 18px; opacity: 0.5; margin-bottom: 40px; }
 
-        .controls { display: flex; gap: 20px; position: relative; }
-        .controls .btn { width: 65px; height: 65px; font-size: 24px; pointer-events: none; /* Пропускаем клик сквозь кнопку */ }
+        /* КОНТЕЙНЕР-МАСКИРОВКА */
+        .engine-box {
+            position: relative;
+            width: 320px;
+            height: 120px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #111;
+            box-shadow: 0 0 40px rgba(160, 32, 240, 0.2);
+        }
 
-        /* НЕВИДИМЫЙ ЯНДЕКС (ДВИЖОК ПОД КНОПКАМИ) */
-        .engine-wrap {
+        /* Накладываем стекло ПОВЕРХ Яндекса, чтобы скрыть логотипы, но оставить кнопки */
+        .glass-cover {
             position: absolute;
-            top: 0; left: 0;
-            width: 300px;
-            height: 100px;
-            opacity: 0; /* Полностью скрыт */
-            z-index: 100;
-            transform: scale(2.2); /* Растягиваем, чтобы кнопки совпали */
-            transform-origin: top left;
+            inset: 0;
+            background: rgba(160, 32, 240, 0.1);
+            backdrop-filter: blur(5px);
+            z-index: 2;
+            pointer-events: none; /* Пропускаем клики к кнопкам под стеклом */
+        }
+
+        iframe {
+            position: absolute;
+            top: -10px; left: -10px;
+            width: 340px; height: 140px;
+            z-index: 1;
         }
 
         /* ЭКРАНЫ */
         .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.98); backdrop-filter: var(--blur); z-index: 8000; }
         .screen.active { display: flex; }
 
-        .profile-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-        .profile-circle { width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); display: flex; align-items: center; justify-content: center; font-size: 50px; color: var(--neon); overflow: hidden; cursor: pointer; }
+        .profile-circle { width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); margin: 10vh auto; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 50px; color: var(--neon); cursor: pointer; }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
@@ -84,28 +98,22 @@
         </div>
     </div>
 
-    <!-- КОНТЕНТ ПЛЕЕРА -->
-    <div class="player-content">
-        <div class="album-label">мрачные треды</div>
-        <div class="track-title">web 2.0</div> <!-- Сюда впиши название первого трека -->
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <div class="main-player">
+        <div class="album-tag">мрачные треды</div>
+        <div class="track-title">web 2.0</div>
         <div class="artist-name">тёмный принц</div>
 
-        <div class="controls">
-            <!-- Твои визуальные кнопки -->
-            <div class="btn">❮</div>
-            <div class="btn" style="border-color: var(--neon); box-shadow: 0 0 30px rgba(160, 32, 240, 0.4);">▶</div>
-            <div class="btn">❯</div>
-
-            <!-- Реальный невидимый Яндекс прямо поверх них -->
-            <div class="engine-wrap">
-                <iframe frameborder="0" style="border:none;width:100%;height:100px;" src="https://yandex.ru"></iframe>
-            </div>
+        <!-- ЗАМАСКИРОВАННЫЙ ДВИЖОК -->
+        <div class="engine-box">
+            <div class="glass-cover"></div>
+            <iframe frameborder="0" src="https://yandex.ru"></iframe>
         </div>
     </div>
 
-    <!-- ЭКРАН ПРОФИЛЯ -->
+    <!-- ЭКРАНЫ -->
     <div id="prof" class="screen">
-        <div class="profile-container">
+        <div class="profile-container" style="display:flex; justify-content:center; align-items:center; height:70vh;">
             <div class="profile-circle" id="prof-btn">+<img id="ava-img" style="display:none"></div>
         </div>
     </div>
