@@ -33,11 +33,11 @@
         <input type="text" id="tTitle" placeholder="название трека">
         <input type="text" id="uName" placeholder="твой ник">
         
-        <label class="file-label" for="fInp" id="fStatus">НАЖМИ ЧТОБЫ ВЫБРАТЬ MP3</label>
-        <input type="file" id="fInp" accept="audio/*" style="display:none" onchange="document.getElementById('fStatus').innerText = 'ФАЙЛ ВЫБРАН: ' + this.files[0].name">
+        <label class="file-label" for="fInp" id="fStatus">ВЫБРАТЬ MP3 ФАЙЛ</label>
+        <input type="file" id="fInp" accept="audio/*" style="display:none" onchange="document.getElementById('fStatus').innerText = 'ФАЙЛ ВЫБРАН'">
         
-        <button class="btn-post" id="upBtn" onclick="send()">отправить трек</button>
-        <div id="loader">ЗАГРУЗКА... ПОДОЖДИ...</div>
+        <button class="btn-post" id="upBtn" onclick="handleSend()">опубликовать</button>
+        <div id="loader">ОТПРАВКА В ОБЛАКО...</div>
         <p onclick="document.getElementById('modal').classList.remove('active')" style="text-align:center; opacity:0.4; margin-top:20px; cursor:pointer">отмена</p>
     </div>
 
@@ -46,50 +46,62 @@
         const S_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; 
         const sb = supabase.createClient(S_URL, S_KEY);
 
-        async function load() {
-            const { data } = await sb.from('posts').select('*').order('id', { ascending: false });
+        async function loadFeed() {
+            const { data, error } = await sb.from('posts').select('*').order('id', { ascending: false });
             if (data) {
-                const f = document.getElementById('feed'); f.innerHTML = "";
-                data.forEach(i => {
-                    f.innerHTML += `<div class="card"><small style="color:var(--neon)">By: ${i.author}</small><h3>${i.title}</h3><audio controls src="${i.link}"></audio></div>`;
+                const feed = document.getElementById('feed');
+                feed.innerHTML = "";
+                data.forEach(item => {
+                    feed.innerHTML += `
+                        <div class="card">
+                            <small style="color:var(--neon)">By: ${item.author}</small>
+                            <h3>${item.title}</h3>
+                            <audio controls src="${item.link}"></audio>
+                        </div>`;
                 });
             }
         }
 
-        async function send() {
-            const t = document.getElementById('tTitle').value;
-            const u = document.getElementById('uName').value;
-            const fileEl = document.getElementById('fInp');
+        async function handleSend() {
+            const title = document.getElementById('tTitle').value;
+            const user = document.getElementById('uName').value;
+            const fileInput = document.getElementById('fInp');
 
-            // ИСПРАВЛЕННАЯ ПРОВЕРКА
-            if (!t || !u || !fileEl.files[0]) {
-                alert("Заполни все поля и выбери файл!");
+            if (!title || !user || !fileInput.files[0]) {
+                alert("Заполни всё!");
                 return;
             }
 
-            const file = fileEl.files[0];
+            const file = fileInput.files[0];
             document.getElementById('upBtn').style.display = 'none';
             document.getElementById('loader').style.display = 'block';
 
             try {
-                const fileName = `${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`;
+                // Генерируем простое имя файла
+                const fileName = Date.now() + ".mp3";
                 
-                const { error: upErr } = await sb.storage.from('music').upload(fileName, file);
-                if (upErr) throw upErr;
+                // 1. Загрузка файла
+                const { error: uploadError } = await sb.storage.from('music').upload(fileName, file);
+                if (uploadError) throw uploadError;
 
+                // 2. Получаем ссылку
                 const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fileName);
                 
-                const { error: dbErr } = await sb.from('posts').insert([{ title: t, author: u, link: publicUrl }]);
-                if (dbErr) throw dbErr;
+                // 3. Записываем в базу
+                const { error: dbError } = await sb.from('posts').insert([
+                    { title: title, author: user, link: publicUrl }
+                ]);
+                if (dbError) throw dbError;
 
                 location.reload();
-            } catch (e) {
-                alert("Ошибка: " + e.message);
+            } catch (err) {
+                alert("Ошибка: " + err.message);
                 document.getElementById('upBtn').style.display = 'block';
                 document.getElementById('loader').style.display = 'none';
             }
         }
-        load();
+
+        loadFeed();
     </script>
 </body>
 </html>
