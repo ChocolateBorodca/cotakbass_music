@@ -5,97 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
     <style>
-        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); }
-        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; }
-        .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); text-align: center; background: #000; position: sticky; top: 0; z-index: 1000; }
-        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-transform: lowercase; }
+        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
+        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 50px; }
+        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.3; }
+        .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7), #000); z-index: -1; }
+        .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); backdrop-filter: var(--blur); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; }
+        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 10px var(--neon); text-transform: lowercase; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 20px; }
-        audio { width: 100%; height: 35px; margin-top: 10px; filter: invert(1); }
-        .fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; border: none; z-index: 2000; }
-        .modal { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; padding: 60px 25px; z-index: 3000; }
-        .modal.active { display: flex; }
-        input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 18px; color: white; margin-bottom: 12px; outline: none; width: 100%; box-sizing: border-box; text-align: center; display: block; cursor: pointer; }
-        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; width: 100%; }
-        #loader { display: none; text-align: center; padding: 20px; color: var(--neon); font-weight: bold; }
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); transition: 0.3s; }
+        .card:hover { border-color: var(--neon); }
+        .card h3 { margin: 0 0 8px 0; font-size: 20px; font-weight: 800; text-transform: lowercase; }
+        .card span { font-size: 10px; color: var(--neon); opacity: 0.7; letter-spacing: 2px; display: block; margin-bottom: 10px; }
+        audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1) hue-rotate(180deg); }
+        .info-box { background: rgba(160, 32, 240, 0.1); border: 1px solid var(--neon); padding: 15px; border-radius: 15px; font-size: 13px; margin-bottom: 20px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div class="nav"><div class="logo">cotakbass</div></div>
-    <div class="container" id="feed"></div>
-    <button class="fab" onclick="document.getElementById('m').classList.add('active')">+</button>
+    <img id="bg-gif" src="https://giphy.com">
+    <div class="overlay"></div>
 
-    <div class="modal" id="m">
-        <h2 style="text-align: center;">Публикация</h2>
-        <input type="text" id="t" placeholder="Название">
-        <input type="text" id="u" placeholder="Ник">
-        <label class="file-label" for="f" id="fs">ВЫБРАТЬ MP3</label>
-        <input type="file" id="f" accept="audio/mpeg" style="display: none;" onchange="if(this.files[0]) document.getElementById('fs').innerText='Файл: '+this.files[0].name">
-        <button class="btn-post" id="b" onclick="upload()">ОПУБЛИКОВАТЬ</button>
-        <div id="loader">ТРЕК ЛЕТИТ В ОБЛАКО...</div>
-        <p onclick="document.getElementById('m').classList.remove('active')" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
+    <div class="nav"><div class="logo">cotakbass</div></div>
+
+    <div class="container">
+        <div class="info-box">
+            Чтобы добавить трек, просто закинь его в папку <b>music</b> на GitHub. <br>Он появится здесь сам!
+        </div>
+        <div id="feed">
+            <p style="text-align:center; opacity:0.3;">сканируем папку music...</p>
+        </div>
     </div>
 
     <script>
-        const S_URL = "https://supabase.co";
-        const S_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv";
+        const USER = "ChocolateBorodca";
+        const REPO = "cotakbass_music";
 
-        // Загрузка ленты напрямую через API
-        async function loadFeed() {
+        async function loadGitHubMusic() {
+            const feed = document.getElementById('feed');
             try {
-                const res = await fetch(`${S_URL}/rest/v1/posts?select=*&order=id.desc`, {
-                    headers: { "apikey": S_KEY, "Authorization": `Bearer ${S_KEY}` }
-                });
-                const data = await res.json();
-                const feed = document.getElementById('feed');
-                feed.innerHTML = "";
-                data.forEach(item => {
-                    feed.innerHTML += `<div class="card"><small>By: ${item.author}</small><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        async function upload() {
-            const t = document.getElementById('t').value;
-            const u = document.getElementById('u').value;
-            const file = document.getElementById('f').files[0];
-
-            if (!t || !u || !file) return alert("Заполни всё!");
-
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('b').style.display = 'none';
-
-            try {
-                const fileName = `${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`;
+                // Используем прокси AllOrigins чтобы GitHub API не заблочили
+                const proxy = "https://allorigins.win";
+                const target = encodeURIComponent(`https://github.com{USER}/${REPO}/contents/music`);
                 
-                // 1. Загрузка файла напрямую в Storage через Fetch
-                const upRes = await fetch(`${S_URL}/storage/v1/object/music/${fileName}`, {
-                    method: 'POST',
-                    headers: { "apikey": S_KEY, "Authorization": `Bearer ${S_KEY}`, "Content-Type": file.type },
-                    body: file
+                const res = await fetch(proxy + target);
+                const json = await res.json();
+                const files = JSON.parse(json.contents);
+
+                feed.innerHTML = "";
+
+                if (!Array.isArray(files)) {
+                    feed.innerHTML = "<p style='text-align:center'>Папка music пуста или не найдена.</p>";
+                    return;
+                }
+
+                files.filter(f => f.name.endsWith('.mp3')).forEach(file => {
+                    const trackName = file.name.replace('.mp3', '').replaceAll('_', ' ');
+                    // Прямая ссылка через CDN jsDelivr (летает в РФ)
+                    const audioUrl = `https://jsdelivr.net{USER}/${REPO}@main/music/${encodeURIComponent(file.name)}`;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <span>OFFICIAL RELEASE</span>
+                        <h3>${trackName}</h3>
+                        <audio controls src="${audioUrl}"></audio>
+                    `;
+                    feed.appendChild(card);
                 });
 
-                if (!upRes.ok) throw new Error("Ошибка при передаче файла");
-
-                const publicUrl = `${S_URL}/storage/v1/object/public/music/${fileName}`;
-
-                // 2. Запись в таблицу напрямую
-                await fetch(`${S_URL}/rest/v1/posts`, {
-                    method: 'POST',
-                    headers: { "apikey": S_KEY, "Authorization": `Bearer ${S_KEY}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ title: t, author: u, link: publicUrl })
-                });
-
-                location.reload();
-            } catch (err) {
-                alert("Ошибка: " + err.message);
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('b').style.display = 'block';
+            } catch (e) {
+                feed.innerHTML = "<p style='text-align:center'>Ошибка связи с GitHub. Попробуй обновить страницу.</p>";
             }
         }
 
-        loadFeed();
+        loadGitHubMusic();
     </script>
 </body>
 </html>
