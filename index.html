@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
-    <!-- НОВЫЙ СПОСОБ ПОДКЛЮЧЕНИЯ (БЕЗ ФАЙЛА) -->
-    <script src="https://unpkg.com"></script>
+    <!-- ПОДКЛЮЧАЕМ БИБЛИОТЕКУ ЧЕРЕЗ СКРИПТ-ЗЕРКАЛО (НЕ ЗАБЛОКИРОВАНО) -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); }
-        body { margin: 0; background: #000; color: white; font-family: sans-serif; padding-bottom: 100px; }
-        .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); text-align: center; }
+        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; }
+        .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); text-align: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; }
         .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-transform: lowercase; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
         .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 20px; }
@@ -19,7 +19,8 @@
         .modal.active { display: flex; }
         input { background: #111; border: 1px solid #333; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; outline: none; width: 100%; box-sizing: border-box; }
         .btn-post { background: var(--neon); color: white; padding: 18px; border-radius: 12px; text-align: center; font-weight: 800; cursor: pointer; border: none; width: 100%; }
-        .btn-post:disabled { background: #222; color: #555; }
+        .file-label { display: block; background: #222; border: 1px dashed #444; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 15px; cursor: pointer; font-size: 13px; }
+        #loader { display: none; text-align: center; padding: 20px; color: var(--neon); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -30,10 +31,14 @@
 
     <div class="modal" id="modal">
         <h2 style="text-align:center">опубликовать</h2>
-        <input type="text" id="tTitle" placeholder="название">
-        <input type="text" id="uName" placeholder="ник">
-        <input type="file" id="fInp" accept="audio/mpeg">
-        <button class="btn-post" id="upBtn" onclick="send()" disabled>ЖДЕМ БАЗУ...</button>
+        <input type="text" id="tTitle" placeholder="название трека">
+        <input type="text" id="uName" placeholder="твой ник">
+        
+        <label class="file-label" for="fInp" id="fStatus">ВЫБРАТЬ MP3 ФАЙЛ</label>
+        <input type="file" id="fInp" accept="audio/*" style="display:none">
+        
+        <button class="btn-post" id="upBtn" onclick="handleStart()">опубликовать</button>
+        <div id="loader">ОТПРАВКА В ОБЛАКО...</div>
         <p onclick="document.getElementById('modal').classList.remove('active')" style="text-align:center; opacity:0.4; margin-top:20px; cursor:pointer">отмена</p>
     </div>
 
@@ -42,45 +47,58 @@
         const S_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; 
         let sb = null;
 
-        // Ждем загрузки скрипта
-        const checkBase = setInterval(() => {
+        // Инициализация при загрузке
+        window.addEventListener('DOMContentLoaded', () => {
             if (typeof supabase !== 'undefined') {
                 sb = supabase.createClient(S_URL, S_KEY);
-                document.getElementById('upBtn').innerText = "отправить трек";
-                document.getElementById('upBtn').disabled = false;
-                load();
-                clearInterval(checkBase);
+                loadFeed();
+            } else {
+                alert("Ошибка загрузки модуля базы. Попробуй обновить страницу.");
             }
-        }, 500);
+        });
 
-        async function load() {
+        document.getElementById('fInp').onchange = function() {
+            if(this.files[0]) document.getElementById('fStatus').innerText = "ВЫБРАН: " + this.files[0].name;
+        };
+
+        async function loadFeed() {
             const { data } = await sb.from('posts').select('*').order('id', { ascending: false });
             if (data) {
-                const f = document.getElementById('feed'); f.innerHTML = "";
-                data.forEach(i => {
-                    f.innerHTML += `<div class="card"><small>By: ${i.author}</small><h3>${i.title}</h3><audio controls src="${i.link}"></audio></div>`;
+                const feed = document.getElementById('feed');
+                feed.innerHTML = "";
+                data.forEach(item => {
+                    feed.innerHTML += `<div class="card"><small style="color:var(--neon)">By: ${item.author}</small><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
                 });
             }
         }
 
-        async function send() {
+        async function handleStart() {
             const t = document.getElementById('tTitle').value;
             const u = document.getElementById('uName').value;
-            const f = document.getElementById('fInp').files[0];
+            const fileInput = document.getElementById('fInp');
+            
+            if (!t || !u || !fileInput.files[0]) return alert("Заполни все поля!");
+            if (!sb) return alert("База еще не готова!");
 
-            if (!t || !u || !f) return alert("Заполни всё!");
-            document.getElementById('upBtn').innerText = "ЗАГРУЗКА...";
-            document.getElementById('upBtn').disabled = true;
+            document.getElementById('upBtn').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
 
             try {
-                const fName = `${Date.now()}.mp3`;
-                await sb.storage.from('music').upload(fName, f);
-                const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fName);
-                await sb.from('posts').insert([{ title: t, author: u, link: publicUrl }]);
+                const file = fileInput.files[0];
+                const fileName = Date.now() + "_" + file.name.replace(/[^a-z0-9.]/gi, '_');
+                
+                const { error: upErr } = await sb.storage.from('music').upload(fileName, file);
+                if (upErr) throw upErr;
+
+                const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fileName);
+                const { error: dbErr } = await sb.from('posts').insert([{ title: t, author: u, link: publicUrl }]);
+                if (dbErr) throw dbErr;
+
                 location.reload();
             } catch (e) {
                 alert("Ошибка: " + e.message);
-                document.getElementById('upBtn').disabled = false;
+                document.getElementById('upBtn').style.display = 'block';
+                document.getElementById('loader').style.display = 'none';
             }
         }
     </script>
