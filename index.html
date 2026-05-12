@@ -14,7 +14,7 @@
 
         body, html {
             margin: 0; padding: 0; background: #000;
-            color: white; font-family: -apple-system, system-ui, sans-serif;
+            color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             height: 100vh; overflow: hidden;
         }
 
@@ -24,7 +24,7 @@
         /* НАВИГАЦИЯ */
         .nav {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 2000;
+            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000;
         }
         .logo-center {
             font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon);
@@ -36,48 +36,46 @@
             width: 52px; height: 52px; border-radius: 50%;
             background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
             border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: white; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2100;
+            cursor: pointer; color: white; transition: 0.3s;
         }
-        .btn:active { transform: scale(0.9); background: rgba(160, 32, 240, 0.2); }
 
         /* ЭКРАНЫ */
         .screen {
-            position: absolute; inset: 0; display: none; 
-            flex-direction: column; padding: 110px 25px 25px;
-            background: rgba(0,0,0,0.96); backdrop-filter: var(--blur); z-index: 1500;
+            position: fixed; inset: 0; display: none; 
+            flex-direction: column; padding: 100px 25px 25px;
+            background: #000; z-index: 4000;
         }
         .screen.active { display: flex; }
 
         /* ПЛЕЕР */
         .player-content { text-align: left; margin-top: 15vh; padding-left: 5%; }
-        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; min-height: 90px; }
-        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; opacity: 0.9; }
-        
+        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; }
+        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; }
         .controls { display: flex; gap: 20px; }
-        .controls .btn { width: 68px; height: 65px; font-size: 24px; }
+        .controls .btn { width: 65px; height: 65px; font-size: 24px; border-color: rgba(255,255,255,0.1); }
 
-        /* ЖИВОЙ ПОИСК */
+        /* ПОИСК */
         .search-box {
             width: 100%; background: var(--glass); border: 1px solid var(--border);
-            border-radius: 22px; padding: 18px 20px; box-sizing: border-box;
-            display: flex; align-items: center; margin-bottom: 20px;
+            border-radius: 22px; padding: 15px 20px; box-sizing: border-box;
+            display: flex; align-items: center; margin-bottom: 10px;
         }
         .search-box input { background: none; border: none; color: white; width: 100%; font-size: 18px; outline: none; }
 
-        .list { overflow-y: auto; flex-grow: 1; }
+        .list { overflow-y: auto; flex-grow: 1; padding-bottom: 20px; }
         .item { 
-            padding: 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); 
+            padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); 
             display: flex; justify-content: space-between; align-items: center;
-            animation: slideIn 0.3s ease;
+            background: rgba(255,255,255,0.02); margin-bottom: 5px; border-radius: 15px;
+            cursor: pointer;
         }
-        @keyframes slideIn { from { opacity:0; transform: translateX(10px); } to { opacity:1; transform: translateX(0); } }
 
         /* ПРОФИЛЬ */
         .profile-circle {
             width: 180px; height: 180px; border-radius: 50%;
             border: 2px solid var(--neon); background: var(--glass);
-            margin: 10vh auto 0; display: flex; justify-content: center; align-items: center;
-            overflow: hidden; box-shadow: 0 0 30px rgba(160, 32, 240, 0.2); position: relative;
+            margin: 10vh auto; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; position: relative;
         }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
     </style>
@@ -96,14 +94,13 @@
         </div>
     </div>
 
-    <!-- AUDIO ENGINE -->
     <audio id="audio-player" crossorigin="anonymous"></audio>
 
     <!-- ПЛЕЕР -->
-    <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
+    <div id="player-screen" style="display: flex; flex-direction: column; padding: 100px 25px;">
         <div class="player-content">
-            <div id="display-title" class="track-title">Мировая база</div>
-            <div id="display-author" class="track-author">начни писать название в поиске</div>
+            <div id="display-title" class="track-title">cotakbass</div>
+            <div id="display-author" class="track-author">напиши в поиске трек</div>
             <div class="controls">
                 <div class="btn" onclick="prev()">❮</div>
                 <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
@@ -112,11 +109,7 @@
         </div>
     </div>
 
-    <div id="lib-screen" class="screen">
-        <div style="text-align:center; color:var(--neon); letter-spacing:5px; font-size:12px; margin-bottom:30px;">FAVORITES</div>
-        <div class="list" id="fav-list"></div>
-    </div>
-
+    <!-- ПОИСК -->
     <div id="search-screen" class="screen">
         <div class="search-box">
             <input type="text" id="search-input" placeholder="напиши хуйню..." autocomplete="off">
@@ -125,11 +118,15 @@
         <div class="list" id="search-results"></div>
     </div>
 
+    <!-- БИБЛИОТЕКА -->
+    <div id="lib-screen" class="screen">
+        <div style="text-align:center; color:var(--neon); letter-spacing:5px; margin-bottom:30px;">FAVORITES</div>
+        <div class="list" id="fav-list"></div>
+    </div>
+
+    <!-- ПРОФИЛЬ -->
     <div id="prof-screen" class="screen">
-        <div class="profile-circle" id="prof-btn">
-            <span id="plus" style="font-size:50px; color:var(--neon);">+</span>
-            <img id="ava-img" style="display:none">
-        </div>
+        <div class="profile-circle" id="prof-btn"><span id="plus">+</span><img id="ava-img" style="display:none"></div>
     </div>
 
     <input type="file" id="file-up" style="display:none" accept="image/*">
@@ -140,50 +137,41 @@
         const audio = document.getElementById('audio-player');
         let gifs = [], curScreen = 'player-screen';
 
-        // 1. Загрузка GIF
         async function loadGifs() {
             try {
                 const res = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
                 const data = await res.json();
                 gifs = data.filter(f => f.name.endsWith('.gif')).map(f => f.download_url);
-                if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[0];
             } catch(e) {}
         }
 
-        // 2. ЖИВОЙ ПОИСК (API Deezer)
         const searchInput = document.getElementById('search-input');
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value;
             if(query.length < 3) return;
 
-            try {
-                const res = await fetch(`https://allorigins.win{encodeURIComponent('https://deezer.com' + query)}`);
-                const json = await res.json();
-                const data = JSON.parse(json.contents);
-                
-                const list = document.getElementById('search-results');
-                list.innerHTML = "";
-                
-                data.data.forEach(t => {
-                    const div = document.createElement('div');
-                    div.className = 'item';
-                    div.innerHTML = `<div><b>${t.title}</b><br><small style="color:#aaa">${t.artist.name}</small></div><div class="btn" style="width:40px; height:40px">▶</div>`;
-                    div.onclick = () => playTrack(t.preview, t.title, t.artist.name);
-                    list.appendChild(div);
-                });
-            } catch(err) { console.error("Search error"); }
+            const res = await fetch(`https://allorigins.win{encodeURIComponent('https://deezer.com' + query)}`);
+            const json = await res.json();
+            const data = JSON.parse(json.contents);
+            const list = document.getElementById('search-results');
+            list.innerHTML = "";
+            
+            data.data.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `<div><b>${t.title}</b><br><small style="color:#888">${t.artist.name}</small></div> <div class="btn" style="width:40px; height:40px; border-color:var(--neon)">▶</div>`;
+                div.onclick = () => playTrack(t.preview, t.title, t.artist.name);
+                list.appendChild(div);
+            });
         });
 
         function playTrack(url, title, author) {
             audio.src = url;
-            audio.load();
-            audio.play().catch(e => console.log("Браузер требует нажатия для старта"));
-            
+            audio.play();
             document.getElementById('display-title').innerText = title;
             document.getElementById('display-author').innerText = author;
             document.getElementById('play-btn').innerText = "Ⅱ";
-            
-            toggleScreen(curScreen); // Закрыть поиск после выбора
+            toggleScreen('search-screen'); // Закрываем поиск
             if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[Math.floor(Math.random()*gifs.length)];
         }
 
@@ -195,17 +183,16 @@
 
         function toggleScreen(id) {
             const screen = document.getElementById(id);
-            if(curScreen === id) {
-                screen.classList.remove('active');
+            if(screen.style.display === 'flex') {
+                screen.style.display = 'none';
                 curScreen = 'player-screen';
             } else {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                screen.classList.add('active');
+                document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+                screen.style.display = 'flex';
                 curScreen = id;
             }
         }
 
-        // Аватарка
         document.getElementById('prof-btn').onclick = () => document.getElementById('file-up').click();
         document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
@@ -213,8 +200,6 @@
                 document.getElementById('ava-img').src = ev.target.result;
                 document.getElementById('ava-img').style.display = 'block';
                 document.getElementById('plus').style.display = 'none';
-                document.getElementById('nav-prof').style.boxShadow = "0 0 15px #A020F0";
-                document.getElementById('nav-prof').style.border = "2px solid #A020F0";
             };
             reader.readAsDataURL(e.target.files);
         };
