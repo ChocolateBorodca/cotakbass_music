@@ -4,56 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass music</title>
-    <!-- Движок YouTube -->
-    <script src="https://youtube.com"></script>
     <style>
-        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
-        body, html { margin: 0; padding: 0; background: #000; color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; height: 100vh; overflow: hidden; }
+        :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.07); --border: rgba(160, 32, 240, 0.3); --blur: blur(40px); }
+        body, html { margin: 0; padding: 0; background: #000; color: white; font-family: -apple-system, sans-serif; height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
         
-        /* Фон */
-        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: -1; }
+        #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; transition: 1s; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: -1; }
 
         /* Навигация */
         .nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 5000; }
-        .logo-center { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); position: absolute; left: 50%; transform: translateX(-50%); }
+        .logo-center { font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 15px var(--neon); text-transform: lowercase; position: absolute; left: 50%; transform: translateX(-50%); cursor: pointer; }
 
-        .btn { width: 52px; height: 52px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(160, 32, 240, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: 0.3s; }
+        .btn { width: 52px; height: 52px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: 0.3s; }
         .btn:active { transform: scale(0.9); }
 
-        /* Интерфейс Плеера */
+        /* Плеер */
         .player-ui { position: relative; margin-top: 18vh; padding-left: 5%; z-index: 100; }
-        .album-tag { font-size: 14px; color: var(--neon); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
-        .track-title { font-size: 48px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 5px; min-height: 60px; }
-        .artist-name { font-size: 18px; opacity: 0.5; margin-bottom: 40px; }
+        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 5px; min-height: 50px; }
+        .artist-name { font-size: 18px; color: var(--neon); opacity: 0.8; margin-bottom: 50px; }
         .controls { display: flex; gap: 20px; }
-        .controls .btn { width: 65px; height: 65px; font-size: 24px; border: 1px solid rgba(255,255,255,0.1); }
+        .controls .btn { width: 65px; height: 65px; font-size: 24px; border-color: rgba(255,255,255,0.1); }
 
         /* Экраны */
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: rgba(0,0,0,0.98); backdrop-filter: var(--blur); z-index: 4000; }
+        .screen { position: fixed; inset: 0; display: none; flex-direction: column; padding: 110px 25px 25px; background: #000; z-index: 4000; }
         .screen.active { display: flex; }
         
         /* Поиск */
         .search-box { width: 100%; background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; box-sizing: border-box; }
         .search-box input { background: none; border: none; color: white; width: 100%; font-size: 18px; outline: none; }
-        .res-list { overflow-y: auto; margin-top: 20px; }
-        .res-item { padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .res-list { overflow-y: auto; flex-grow: 1; margin-top: 20px; }
+        .item { padding: 18px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 
         /* Профиль */
         .profile-circle { width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon); background: var(--glass); margin: 10vh auto 0; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 50px; color: var(--neon); cursor: pointer; }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* СКРЫТЫЙ ДВИЖОК (ЧЕРНАЯ ДЫРА) */
-        #yt-player { position: absolute; left: -9999px; top: -9999px; }
     </style>
 </head>
 <body>
+
     <img id="bg-gif" src="https://giphy.com">
     <div class="overlay"></div>
 
     <div class="nav">
         <div class="btn" onclick="toggleScreen('lib')">☰</div>
-        <div class="logo-center">cotakbass</div>
+        <div class="logo-center" onclick="location.reload()">cotakbass</div>
         <div style="display: flex; gap: 10px;">
             <div class="btn" onclick="toggleScreen('prof')">👤</div>
             <div class="btn" onclick="toggleScreen('search')">?</div>
@@ -62,9 +56,9 @@
 
     <!-- UI ПЛЕЕРА -->
     <div class="player-ui">
-        <div class="album-tag">cotakbass music</div>
-        <div id="display-title" class="track-title">web 2.0</div>
-        <div id="display-author" class="artist-name">тёмный принц</div>
+        <div style="font-size:12px; color:var(--neon); letter-spacing:3px; margin-bottom:10px; font-weight:700;">WORLD BASE</div>
+        <div id="m-title" class="track-title">напиши хуйню</div>
+        <div id="m-author" class="artist-name">в поиске трек</div>
         <div class="controls">
             <div class="btn" onclick="prev()">❮</div>
             <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
@@ -72,18 +66,17 @@
         </div>
     </div>
 
-    <!-- СКРЫТЫЙ ДВИЖОК -->
-    <div id="yt-player"></div>
+    <audio id="main-audio" crossorigin="anonymous"></audio>
 
-    <!-- ЭКРАН ПОИСКА -->
+    <!-- ПОИСК -->
     <div id="search" class="screen">
         <div class="search-box">
-            <input type="text" id="s-input" placeholder="напиши хуйню..." oninput="searchMusic(this.value)">
+            <input type="text" id="s-input" placeholder="напиши хуйню..." oninput="liveSearch(this.value)">
         </div>
         <div id="s-results" class="res-list"></div>
     </div>
 
-    <!-- ЭКРАН ПРОФИЛЯ -->
+    <!-- ПРОФИЛЬ -->
     <div id="prof" class="screen">
         <div class="profile-circle" id="prof-btn">+<img id="ava-img" style="display:none"></div>
     </div>
@@ -92,37 +85,45 @@
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
     <script>
-        let ytPlayer, isPlaying = false, tracks = [];
+        const audio = document.getElementById('main-audio');
+        let isPlaying = false;
+        let searchTimeout;
 
-        function onYouTubeIframeAPIReady() {
-            ytPlayer = new YT.Player('yt-player', { height: '1', width: '1', videoId: 'dQw4w9WgXcQ' });
-        }
-
-        async function searchMusic(q) {
-            if(q.length < 3) return;
-            const res = await fetch(`https://allorigins.win{encodeURIComponent('https://apple.com' + q + '&media=music&limit=10')}`);
-            const data = JSON.parse((await res.json()).contents);
-            const list = document.getElementById('s-results');
-            list.innerHTML = "";
-            data.results.forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'res-item';
-                div.innerHTML = `<div><b>${t.trackName}</b><br><small>${t.artistName}</small></div> <div class="btn" style="width:40px; height:40px">▶</div>`;
-                div.onclick = () => {
-                    document.getElementById('display-title').innerText = t.trackName;
-                    document.getElementById('display-author').innerText = t.artistName;
-                    // Здесь в идеальном мире мы ищем id на YouTube, но для теста запустим звук
-                    ytPlayer.loadVideoById('dQw4w9WgXcQ'); // Заглушка
-                    toggleScreen('search');
-                };
-                list.appendChild(div);
-            });
+        async function liveSearch(q) {
+            if (q.length < 3) return;
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                try {
+                    // Используем Deezer через прокси AllOrigins
+                    const res = await fetch(`https://allorigins.win{encodeURIComponent('https://deezer.com' + q)}`);
+                    const data = JSON.parse((await res.json()).contents);
+                    const list = document.getElementById('s-results');
+                    list.innerHTML = "";
+                    
+                    data.data.forEach(t => {
+                        const div = document.createElement('div');
+                        div.className = 'item';
+                        div.innerHTML = `<div><b>${t.title}</b><br><small style="opacity:0.6">${t.artist.name}</small></div><div class="btn" style="width:40px; height:40px">▶</div>`;
+                        div.onclick = () => {
+                            audio.src = t.preview;
+                            document.getElementById('m-title').innerText = t.title;
+                            document.getElementById('m-author').innerText = t.artist.name;
+                            audio.play();
+                            isPlaying = true;
+                            document.getElementById('play-btn').innerText = "Ⅱ";
+                            toggleScreen('search');
+                        };
+                        list.appendChild(div);
+                    });
+                } catch (e) { console.error("Search failed"); }
+            }, 500);
         }
 
         function playPause() {
-            if(isPlaying) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
+            if (!audio.src) return;
+            if (isPlaying) { audio.pause(); document.getElementById('play-btn').innerText = "▶"; }
+            else { audio.play(); document.getElementById('play-btn').innerText = "Ⅱ"; }
             isPlaying = !isPlaying;
-            document.getElementById('play-btn').innerText = isPlaying ? "Ⅱ" : "▶";
         }
 
         function toggleScreen(id) {
