@@ -44,7 +44,7 @@
             border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: white; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .btn:active { transform: scale(0.9); box-shadow: 0 0 20px var(--neon); }
+        .btn:active { transform: scale(0.9); }
 
         /* Экраны */
         .screen {
@@ -78,10 +78,11 @@
         .profile-circle {
             width: 180px; height: 180px; border-radius: 50%;
             border: 2px solid var(--neon); background: var(--glass);
-            margin: 15vh auto 0; display: flex; justify-content: center; align-items: center;
+            margin: 20vh auto 0; display: flex; justify-content: center; align-items: center;
             overflow: hidden; position: relative; box-shadow: 0 0 30px rgba(160, 32, 240, 0.2);
         }
         .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .back-btn-corner { position: fixed; top: 25px; left: 25px; z-index: 1100; }
     </style>
 </head>
 <body>
@@ -102,7 +103,7 @@
     <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
         <div class="player-content">
             <div id="track-title" class="track-title">Загрузка...</div>
-            <div id="track-author" class="track-author">проверяем файлы</div>
+            <div id="track-author" class="track-author">проверяем GitHub</div>
             <div class="controls">
                 <div class="btn" onclick="prev()">❮</div>
                 <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
@@ -113,12 +114,14 @@
 
     <!-- БИБЛИОТЕКА -->
     <div id="lib-screen" class="screen">
+        <div class="btn back-btn-corner" onclick="toggleScreen('lib-screen')">←</div>
         <div class="logo" style="position: static; margin-bottom: 30px; text-align: center;">favorites</div>
         <div class="list" id="fav-list"></div>
     </div>
 
     <!-- ПОИСК -->
     <div id="search-screen" class="screen">
+        <div class="btn back-btn-corner" onclick="toggleScreen('search-screen')">←</div>
         <div class="search-box">
             <input type="text" id="search-input" placeholder="напиши хуйню">
             <div class="search-confirm">?</div>
@@ -128,6 +131,7 @@
 
     <!-- ПРОФИЛЬ -->
     <div id="prof-screen" class="screen">
+        <div class="btn back-btn-corner" onclick="toggleScreen('prof-screen')">←</div>
         <div class="profile-circle" id="prof-btn">
             <span id="plus">+</span>
             <img id="ava-img" style="display:none">
@@ -136,7 +140,7 @@
     </div>
 
     <script>
-        // === НАСТРОЙКИ ТВOEГО GITHUB ===
+        // === ДАННЫЕ ТВОЕГО РЕПОЗИТОРИЯ ===
         const USER = "ChocolateBorodca"; 
         const REPO = "cotakbass_music"; 
         // ===============================
@@ -146,23 +150,34 @@
 
         async function init() {
             try {
-                // Читаем папку music
-                const mRes = await fetch(`https://github.com{USER}/${REPO}/contents/music`);
+                // Добавляем метку времени, чтобы GitHub не выдавал старые данные из кэша
+                const cacheBuster = `?t=${new Date().getTime()}`;
+                
+                const [mRes, bRes] = await Promise.all([
+                    fetch(`https://github.com{USER}/${REPO}/contents/music${cacheBuster}`),
+                    fetch(`https://github.com{USER}/${REPO}/contents/bg${cacheBuster}`)
+                ]);
+                
                 const mData = await mRes.json();
+                const bData = await bRes.json();
+                
+                // Фильтруем только mp3 и gif, игнорируя .gitkeep
                 tracks = mData.filter(f => f.name.endsWith('.mp3')).map(f => ({
                     name: f.name.replace('.mp3', ''),
                     url: f.download_url
                 }));
 
-                // Читаем папку bg
-                const bRes = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
-                const bData = await bRes.json();
                 gifs = bData.filter(f => f.name.endsWith('.gif')).map(f => f.download_url);
                 
-                if(tracks.length > 0) update();
+                if(tracks.length > 0) {
+                    update();
+                } else {
+                    document.getElementById('track-title').innerText = "Пусто";
+                    document.getElementById('track-author').innerText = "Загрузи mp3 в папку music";
+                }
             } catch (e) { 
                 document.getElementById('track-title').innerText = "Ошибка";
-                document.getElementById('track-author').innerText = "Проверь папки на GitHub";
+                document.getElementById('track-author').innerText = "Проверь, что репозиторий Public";
             }
         }
 
@@ -180,13 +195,16 @@
 
         function update() {
             const t = tracks[curIdx];
-            const [a, n] = t.name.includes(' - ') ? t.name.split(' - ') : ['Unknown', t.name];
-            document.getElementById('track-title').innerText = n || a;
-            document.getElementById('track-author').innerText = a;
+            // Разбиваем название файла "Исполнитель - Название"
+            const parts = t.name.split(' - ');
+            const artist = parts[0] || "Unknown";
+            const title = parts[1] || parts[0];
+
+            document.getElementById('track-title').innerText = title;
+            document.getElementById('track-author').innerText = artist;
             
-            // Рандомный GIF из твоей папки bg
             if(gifs.length > 0) {
-                document.getElementById('bg-gif').src = gifs[Math.floor(Math.random()*gifs.length)];
+                document.getElementById('bg-gif').src = gifs[Math.floor(Math.random() * gifs.length)];
             }
             
             audio.src = t.url;
@@ -194,15 +212,16 @@
         }
 
         function playPause() {
+            if(tracks.length === 0) return;
             isPlaying = !isPlaying;
             document.getElementById('play-btn').innerText = isPlaying ? "Ⅱ" : "▶";
             isPlaying ? audio.play() : audio.pause();
         }
 
-        function next() { curIdx = (curIdx + 1) % tracks.length; update(); }
-        function prev() { curIdx = (curIdx - 1 + tracks.length) % tracks.length; update(); }
+        function next() { if(tracks.length > 0) { curIdx = (curIdx + 1) % tracks.length; update(); } }
+        function prev() { if(tracks.length > 0) { curIdx = (curIdx - 1 + tracks.length) % tracks.length; update(); } }
 
-        // Поиск
+        // Живой поиск
         document.getElementById('search-input').oninput = (e) => {
             const v = e.target.value.toLowerCase();
             const list = document.getElementById('search-list');
@@ -211,12 +230,18 @@
                 const div = document.createElement('div');
                 div.className = 'item';
                 div.innerHTML = `<div>${t.name}</div><div class="btn" style="width:40px; height:40px">▶</div>`;
-                div.onclick = () => { curIdx = tracks.indexOf(t); isPlaying = true; update(); toggleScreen('search-list'); };
+                div.onclick = () => { 
+                    curIdx = tracks.indexOf(t); 
+                    isPlaying = true; 
+                    document.getElementById('play-btn').innerText = "Ⅱ";
+                    update(); 
+                    toggleScreen('search-screen'); 
+                };
                 list.appendChild(div);
             });
         };
 
-        // Аватарка
+        // Логика аватара
         document.getElementById('prof-btn').onclick = () => document.getElementById('file-up').click();
         document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
