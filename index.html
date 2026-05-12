@@ -4,23 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass music</title>
-    <!-- SoundCloud API -->
+    <!-- SoundCloud API (обязательно для управления) -->
     <script src="https://soundcloud.com"></script>
     <style>
         :root {
             --neon: #A020F0;
             --glass: rgba(255, 255, 255, 0.05);
             --border: rgba(160, 32, 240, 0.3);
-            --blur: blur(40px);
+            --blur: blur(45px);
         }
 
         body, html {
             margin: 0; padding: 0; background: #000;
-            color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            color: white; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent;
         }
 
-        /* GIF ФОН */
+        /* GIF ФОН ИЗ ГИТХАБА */
         #bg-gif {
             position: fixed; inset: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: -2; opacity: 0.5; transition: opacity 1.5s ease;
@@ -32,7 +32,6 @@
             display: flex; justify-content: space-between; align-items: center;
             padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 2000;
         }
-        
         .logo-center {
             font-size: 13px; font-weight: 700; letter-spacing: 5px; color: var(--neon);
             text-shadow: 0 0 15px var(--neon); text-transform: lowercase;
@@ -45,38 +44,40 @@
             border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: white; transition: 0.4s cubic-bezier(0.15, 0, 0.2, 1);
         }
-        .btn:active { transform: scale(0.9); }
+        .btn:active { transform: scale(0.9); box-shadow: 0 0 20px var(--neon); }
 
         /* ЭКРАНЫ */
         .screen {
             position: absolute; inset: 0; display: none; 
             flex-direction: column; padding: 110px 25px 25px;
-            background: rgba(0,0,0,0.95); backdrop-filter: var(--blur); z-index: 1000;
+            background: rgba(0,0,0,0.92); backdrop-filter: var(--blur); z-index: 1000;
         }
         .screen.active { display: flex; }
 
-        /* ПЛЕЕР: ТЕКСТ СЛЕВА */
+        /* ПЛЕЕР (ТЕКСТ СЛЕВА) */
         .player-content { text-align: left; margin-top: 15vh; padding-left: 5%; }
-        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; min-height: 50px; }
+        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 8px; min-height: 100px; }
         .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; opacity: 0.8; }
         
-        /* КНОПКИ ОДИНАКОВОГО РАЗМЕРА */
         .controls { display: flex; gap: 20px; }
-        .controls .btn { width: 65px; height: 65px; font-size: 24px; }
+        .controls .btn { width: 65px; height: 65px; font-size: 24px; } /* Одинаковый размер */
 
-        /* СКРЫВАЕМ ВСЕ ЛИШНЕЕ ОТ ПЛЕЕРА */
-        #sc-player { position: absolute; top: -5000px; left: -5000px; width: 1px; height: 1px; opacity: 0; }
+        /* СКРЫТЫЙ ПЛЕЕР (ДВИЖОК) */
+        #sc-iframe { position: absolute; visibility: hidden; pointer-events: none; top: -5000px; }
 
+        /* ПОИСК */
         .search-box {
             width: 100%; background: var(--glass); border: 1px solid var(--border);
             border-radius: 20px; padding: 15px 20px; box-sizing: border-box;
             display: flex; align-items: center; position: relative;
         }
         .search-box input { background: none; border: none; color: white; width: 85%; font-size: 18px; outline: none; }
+        .search-confirm { color: var(--neon); font-weight: 900; font-size: 22px; cursor: pointer; position: absolute; right: 20px; }
 
         .list { margin-top: 20px; overflow-y: auto; flex-grow: 1; }
         .item { padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
 
+        /* ПРОФИЛЬ (КРУГ В ЦЕНТРЕ) */
         .profile-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
         .profile-circle {
             width: 180px; height: 180px; border-radius: 50%;
@@ -93,21 +94,24 @@
     <div class="overlay"></div>
 
     <div class="nav">
+        <!-- БИБЛИОТЕКА (Toggle) -->
         <div class="btn" onclick="toggleScreen('lib-screen')">☰</div>
         <div class="logo-center">cotakbass</div>
         <div style="display: flex; gap: 10px;">
             <div class="btn" id="nav-prof" onclick="toggleScreen('prof-screen')">👤</div>
+            <!-- ПОИСК (Toggle) -->
             <div class="btn" onclick="toggleScreen('search-screen')">?</div>
         </div>
     </div>
 
-    <!-- Исправленный фрейм без лишних символов -->
-    <iframe id="sc-player" src="https://soundcloud.com"></iframe>
+    <!-- ТВОЙ ПЛЕЙЛИСТ ИЗ SOUNDCLOUD (ID: 2081646105) -->
+    <iframe id="sc-iframe" src="https://soundcloud.com"></iframe>
 
+    <!-- ГЛАВНЫЙ ЭКРАН -->
     <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
         <div class="player-content">
             <div id="track-title" class="track-title">Загрузка...</div>
-            <div id="track-author" class="track-author">cotakbass music</div>
+            <div id="track-author" class="track-author">через прокси-шлюз</div>
             <div class="controls">
                 <div class="btn" onclick="prev()">❮</div>
                 <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
@@ -117,21 +121,21 @@
     </div>
 
     <div id="lib-screen" class="screen">
-        <div style="text-align:center; color:var(--neon); letter-spacing:5px; font-size:11px; margin-bottom:30px; font-weight:700;">FAVORITES</div>
+        <div style="text-align:center; color:var(--neon); letter-spacing:5px; font-size:12px; margin-bottom:30px;">FAVORITES</div>
         <div class="list" id="fav-list"></div>
     </div>
 
     <div id="search-screen" class="screen">
         <div class="search-box">
             <input type="text" id="search-input" placeholder="напиши хуйню">
-            <div style="color:var(--neon); font-weight:900; font-size:22px;">?</div>
+            <div class="search-confirm">?</div>
         </div>
         <div class="list" id="search-list"></div>
     </div>
 
     <div id="prof-screen" class="screen">
         <div class="profile-container">
-            <div class="profile-circle" id="prof-upload">
+            <div class="profile-circle" id="prof-btn">
                 <span id="plus" style="font-size:50px; color:var(--neon);">+</span>
                 <img id="ava-img" style="display:none">
             </div>
@@ -141,33 +145,35 @@
     <input type="file" id="file-up" style="display:none" accept="image/*">
 
     <script>
+        // ДАННЫЕ GitHub (для GIF)
         const USER = "ChocolateBorodca";
         const REPO = "cotakbass_music";
 
-        const widget = SC.Widget(document.getElementById('sc-player'));
+        const widget = SC.Widget(document.getElementById('sc-iframe'));
         let tracks = [], gifs = [], isPlaying = false, curScreen = 'player-screen';
 
+        // 1. Загрузка GIF из твоего GitHub через прокси
         async function loadGifs() {
             try {
-                const res = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
+                const proxy = "https://allorigins.win";
+                const bgApi = encodeURIComponent(`https://github.com{USER}/${REPO}/contents/bg`);
+                const res = await fetch(proxy + bgApi);
                 const data = await res.json();
-                gifs = data.filter(f => f.name.endsWith('.gif')).map(f => f.download_url);
+                gifs = data.filter(f => f.name.endsWith('.gif')).map(f => `https://jsdelivr.net{USER}/${REPO}@main/bg/${f.name}`);
                 if(gifs.length > 0) changeBg();
-            } catch (e) { console.log("Gifs error"); }
+            } catch (e) { console.log("Gifs proxy error"); }
         }
 
         function changeBg() {
-            if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[Math.floor(Math.random()*gifs.length)];
+            if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[Math.floor(Math.random() * gifs.length)];
         }
 
-        // Умная загрузка плейлиста
+        // 2. Инициализация SoundCloud Движка
         widget.bind(SC.Widget.Events.READY, () => {
             widget.getSounds((sounds) => {
-                if (sounds && sounds.length > 0) {
-                    tracks = sounds;
-                    updateUI();
-                    renderLists();
-                }
+                tracks = sounds;
+                updateUI();
+                renderLists();
             });
         });
 
@@ -187,8 +193,8 @@
             document.getElementById('play-btn').innerText = isPlaying ? "Ⅱ" : "▶";
         }
 
-        function next() { widget.next(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 1000); }
-        function prev() { widget.prev(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 1000); }
+        function next() { widget.next(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 800); }
+        function prev() { widget.prev(); isPlaying = true; document.getElementById('play-btn').innerText = "Ⅱ"; setTimeout(updateUI, 800); }
 
         function toggleScreen(id) {
             const screen = document.getElementById(id);
@@ -214,6 +220,7 @@
             });
         }
 
+        // Поиск по загруженному плейлисту
         document.getElementById('search-input').oninput = (e) => {
             const v = e.target.value.toLowerCase();
             const list = document.getElementById('search-list');
@@ -228,7 +235,8 @@
             });
         };
 
-        document.getElementById('prof-upload').onclick = () => document.getElementById('file-up').click();
+        // Аватарка
+        document.getElementById('prof-btn').onclick = () => document.getElementById('file-up').click();
         document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
@@ -236,7 +244,7 @@
                 img.src = ev.target.result; img.style.display = 'block';
                 document.getElementById('plus').style.display = 'none';
                 document.getElementById('nav-prof').style.boxShadow = "0 0 15px #A020F0";
-                document.getElementById('nav-prof').style.border = "2px solid #A020F0";
+                document.getElementById('nav-prof').style.borderColor = "#A020F0";
             };
             reader.readAsDataURL(e.target.files);
         };
