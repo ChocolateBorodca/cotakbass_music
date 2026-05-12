@@ -8,38 +8,36 @@
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
         body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; }
         #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.3; }
-        .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7), #000); z-index: -1; }
+        .overlay { position: fixed; inset: 0; background: #000; opacity: 0.8; z-index: -1; }
         .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); backdrop-filter: var(--blur); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; }
-        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 10px var(--neon); text-transform: lowercase; }
+        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-transform: lowercase; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
         .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); }
         .card h3 { margin: 0 0 8px 0; font-size: 20px; font-weight: 800; }
-        .card span { font-size: 10px; color: var(--neon); text-transform: uppercase; margin-bottom: 10px; display: block; }
-        audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1) hue-rotate(180deg); }
-        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 35px; color: white; cursor: pointer; z-index: 2000; border: none; font-weight: bold; }
+        audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1); }
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 35px; color: white; cursor: pointer; z-index: 2000; border: none; }
         .modal { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; padding: 60px 25px; z-index: 3000; }
         .modal.active { display: flex; }
-        input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 18px; color: white; margin-bottom: 12px; outline: none; font-size: 16px; display: block; text-align: center; cursor: pointer; width: 100%; box-sizing: border-box; }
-        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; }
-        #loader { display: none; text-align: center; margin-top: 20px; color: var(--neon); font-weight: 700; }
+        input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 18px; color: white; margin-bottom: 12px; outline: none; width: 100%; box-sizing: border-box; text-align: center; display: block; cursor: pointer; }
+        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; }
+        #loader { display: none; text-align: center; color: var(--neon); font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <img id="bg-gif" src="https://giphy.com">
     <div class="overlay"></div>
     <div class="nav"><div class="logo">cotakbass</div></div>
     <div class="container" id="feed"></div>
     <button class="fab" onclick="toggleModal()">+</button>
 
     <div class="modal" id="postModal">
-        <h2 style="text-align: center; margin-bottom: 30px;">Опубликовать</h2>
+        <h2 style="text-align: center;">Опубликовать</h2>
         <input type="text" id="tTitle" placeholder="Название трека">
         <input type="text" id="uName" placeholder="Твой ник">
-        <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3</label>
-        <input type="file" id="fileInput" accept="audio/mpeg" style="display: none;" onchange="if(this.files[0]) document.getElementById('fileStatus').innerText='Файл выбран'">
-        <button class="btn-post" id="upBtn" onclick="handleUpload()">Опубликовать</button>
-        <div id="loader">ТРЕК ЛЕТИТ В ОБЛАКО...</div>
+        <label class="file-label" for="fileInput" id="fileStatus">ВЫБРАТЬ MP3</label>
+        <input type="file" id="fileInput" accept="audio/mpeg" style="display: none;" onchange="if(this.files[0]) document.getElementById('fileStatus').innerText='Файл: '+this.files[0].name">
+        <button class="btn-post" id="upBtn" onclick="handleUpload()">ОПУБЛИКОВАТЬ</button>
+        <div id="loader">ПРОБИВАЕМ БЛОКИРОВКУ...</div>
         <p onclick="toggleModal()" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
@@ -50,17 +48,20 @@
         function toggleModal() { document.getElementById('postModal').classList.toggle('active'); }
 
         async function loadFeed() {
+            // Используем прокси-пробойник для чтения ленты
+            const proxy = "https://allorigins.win";
+            const target = encodeURIComponent(`${S_URL}/rest/v1/posts?select=*&order=id.desc`);
+            
             try {
-                const res = await fetch(`${S_URL}/rest/v1/posts?select=*&order=id.desc`, {
-                    headers: { "apikey": S_KEY, "Authorization": `Bearer ${S_KEY}` }
-                });
-                const data = await res.json();
+                const res = await fetch(proxy + target);
+                const json = await res.json();
+                const data = JSON.parse(json.contents);
                 const feed = document.getElementById('feed');
                 feed.innerHTML = "";
                 data.forEach(item => {
                     feed.innerHTML += `<div class="card"><span>By: ${item.author}</span><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
                 });
-            } catch (e) { console.log("Load error"); }
+            } catch (e) { document.getElementById('feed').innerHTML = "<p style='text-align:center'>Включите VPN для загрузки ленты</p>"; }
         }
 
         async function handleUpload() {
@@ -76,32 +77,27 @@
             try {
                 const fileName = Date.now() + ".mp3";
                 
-                // 1. Загрузка файла напрямую
+                // ШАГ 1: Загрузка через шлюз
                 const upRes = await fetch(`${S_URL}/storage/v1/object/music/${fileName}`, {
                     method: 'POST',
                     headers: { "apikey": S_KEY, "Authorization": `Bearer ${S_KEY}`, "Content-Type": file.type },
                     body: file
                 });
 
-                if (!upRes.ok) throw new Error("Ошибка загрузки файла");
+                if (!upRes.ok) throw new Error("Провайдер блокирует загрузку. Попробуйте VPN.");
 
                 const publicUrl = `${S_URL}/storage/v1/object/public/music/${fileName}`;
 
-                // 2. Запись в базу напрямую
-                const dbRes = await fetch(`${S_URL}/rest/v1/posts`, {
+                // ШАГ 2: Запись в базу
+                await fetch(`${S_URL}/rest/v1/posts`, {
                     method: 'POST',
-                    headers: { 
-                        "apikey": S_KEY, "Authorization": `Bearer ${S_KEY}`, 
-                        "Content-Type": "application/json", "Prefer": "return=minimal" 
-                    },
+                    headers: { "apikey": S_KEY, "Authorization": `Bearer ${S_KEY}`, "Content-Type": "application/json" },
                     body: JSON.stringify({ title: title, author: user, link: publicUrl })
                 });
 
-                if (!dbRes.ok) throw new Error("Ошибка записи в базу");
-
                 location.reload();
             } catch (err) {
-                alert("Ошибка: " + err.message);
+                alert(err.message);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('upBtn').style.display = 'block';
             }
