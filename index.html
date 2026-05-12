@@ -55,12 +55,6 @@
         .controls { display: flex; gap: 20px; }
         .controls .btn { width: 65px; height: 65px; font-size: 24px; }
 
-        .search-box {
-            position: relative; width: 100%; background: var(--glass); 
-            backdrop-filter: var(--blur); border: 1px solid var(--border);
-            border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; box-sizing: border-box;
-        }
-        .search-box input { background: none; border: none; color: white; width: 100%; font-size: 18px; outline: none; }
         .list { margin-top: 20px; overflow-y: auto; flex-grow: 1; }
         .item { padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
 
@@ -90,7 +84,7 @@
     <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
         <div class="player-content">
             <div id="track-title" class="track-title">Загрузка...</div>
-            <div id="track-author" class="track-author" style="color: var(--neon)">подожди чуть-чуть</div>
+            <div id="track-author" class="track-author" style="color: var(--neon)">соединение с GitHub</div>
             <div class="controls">
                 <div class="btn" onclick="prev()">❮</div>
                 <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
@@ -107,24 +101,19 @@
 
     <div id="search-screen" class="screen">
         <div class="btn" style="position:fixed; top:25px; left:25px;" onclick="toggleScreen('search-screen')">←</div>
-        <div class="search-box">
-            <input type="text" id="search-input" placeholder="напиши хуйню">
-            <div style="color:var(--neon); font-weight:900; margin-left:10px;">?</div>
+        <div style="background:var(--glass); border:1px solid var(--border); border-radius:20px; padding:15px 20px;">
+            <input type="text" id="search-input" placeholder="напиши хуйню" style="background:none; border:none; color:white; width:80%; outline:none; font-size:18px;">
         </div>
         <div class="list" id="search-list"></div>
     </div>
 
     <div id="prof-screen" class="screen">
         <div class="btn" style="position:fixed; top:25px; left:25px;" onclick="toggleScreen('prof-screen')">←</div>
-        <div class="profile-circle" id="prof-btn">
-            <span id="plus">+</span>
-            <img id="ava-img" style="display:none">
-        </div>
+        <div class="profile-circle" id="prof-btn"><span id="plus">+</span><img id="ava-img" style="display:none"></div>
         <input type="file" id="file-up" style="display:none" accept="image/*">
     </div>
 
     <script>
-        // ДАННЫЕ (ПРОВЕРЬ ЕЩЕ РАЗ)
         const USER = "ChocolateBorodca"; 
         const REPO = "cotakbass_music"; 
 
@@ -136,42 +125,46 @@
             const statusAuthor = document.getElementById('track-author');
 
             try {
-                // 1. Пытаемся получить музыку
-                const mRes = await fetch(`https://github.com{USER}/${REPO}/contents/music?t=${Date.now()}`);
-                if (!mRes.ok) {
-                    statusTitle.innerText = "Папка не найдена";
-                    statusAuthor.innerText = "Создай папку music на GitHub";
+                // Пытаемся получить файлы без кэш-бастера (иногда он мешает CORS)
+                const mRes = await fetch(`https://github.com{USER}/${REPO}/contents/music`);
+                
+                if (mRes.status === 403) {
+                    statusTitle.innerText = "Лимит GitHub";
+                    statusAuthor.innerText = "Подожди 15 минут";
                     return;
                 }
+
+                if (!mRes.ok) {
+                    statusTitle.innerText = "Ошибка " + mRes.status;
+                    statusAuthor.innerText = "Проверь папку music";
+                    return;
+                }
+
                 const mData = await mRes.json();
-                
-                // Фильтруем только mp3
                 tracks = mData.filter(f => f.name.toLowerCase().endsWith('.mp3')).map(f => ({
                     name: f.name.replace('.mp3', ''),
                     url: f.download_url
                 }));
 
-                if (tracks.length === 0) {
-                    statusTitle.innerText = "Папка пуста";
-                    statusAuthor.innerText = "Закинь MP3 в папку music";
-                    return;
-                }
-
-                // 2. Пытаемся получить гифки
-                const bRes = await fetch(`https://github.com{USER}/${REPO}/contents/bg?t=${Date.now()}`);
+                const bRes = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
                 if (bRes.ok) {
                     const bData = await bRes.json();
                     gifs = bData.filter(f => f.name.toLowerCase().endsWith('.gif')).map(f => f.download_url);
                 }
 
-                // 3. Если всё ок - запускаем
-                update();
-                renderLibrary();
+                if (tracks.length > 0) {
+                    update();
+                    renderLibrary();
+                } else {
+                    statusTitle.innerText = "Папка пуста";
+                    statusAuthor.innerText = "Закинь MP3 в папку music";
+                }
 
-            } catch (e) {
-                statusTitle.innerText = "Ошибка сети";
-                statusAuthor.innerText = "Проверь интернет или Public статус";
-                console.error(e);
+            } catch (err) {
+                // Выводим РЕАЛЬНУЮ техническую ошибку
+                statusTitle.innerText = "Тех. ошибка";
+                statusAuthor.innerText = err.message;
+                console.error("DEBUG:", err);
             }
         }
 
@@ -192,11 +185,8 @@
             const t = tracks[curIdx];
             const parts = t.name.split(' - ');
             document.getElementById('track-title').innerText = parts[1] || parts[0];
-            document.getElementById('track-author').innerText = parts[0] || "Unknown";
-            
-            if(gifs.length > 0) {
-                document.getElementById('bg-gif').src = gifs[Math.floor(Math.random() * gifs.length)];
-            }
+            document.getElementById('track-author').innerText = parts[1] ? parts[0] : "Unknown";
+            if(gifs.length > 0) document.getElementById('bg-gif').src = gifs[Math.floor(Math.random() * gifs.length)];
             audio.src = t.url;
             if(isPlaying) audio.play();
         }
