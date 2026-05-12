@@ -4,134 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
-    <!-- ПОДКЛЮЧАЕМ ТВОЙ ФАЙЛ С МОЗГАМИ БАЗЫ -->
-    <script src="supabase.js"></script>
+    <!-- ПОДКЛЮЧАЕМ ЧЕРЕЗ ОБЛАКО CLOUDFLARE (Обычно не блокируется) -->
+    <script src="https://cloudflare.com"></script>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
-        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; overflow-x: hidden; }
-        
-        /* ФОН */
+        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; }
         #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.3; }
         .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7), #000); z-index: -1; }
-
-        /* НАВИГАЦИЯ */
         .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); backdrop-filter: var(--blur); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; }
-        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 10px var(--neon); text-transform: lowercase; }
-
+        .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-transform: lowercase; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        
-        /* КАРТОЧКА ТРЕКА */
-        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); animation: slideUp 0.5s ease; }
-        .card h3 { margin: 0 0 8px 0; font-size: 20px; font-weight: 800; }
-        .card .user-tag { font-size: 11px; color: var(--neon); opacity: 0.7; text-transform: uppercase; margin-bottom: 15px; display: block; }
-        
-        audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1) hue-rotate(180deg) opacity(0.8); }
-
-        /* КНОПКА + */
-        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; box-shadow: 0 0 30px rgba(160, 32, 240, 0.4); z-index: 2000; border: none; }
-
-        /* МОДАЛКА */
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); }
+        audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1) hue-rotate(180deg); }
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; cursor: pointer; z-index: 2000; border: none; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: none; flex-direction: column; padding: 60px 25px; z-index: 3000; backdrop-filter: blur(20px); }
         .modal.active { display: flex; }
-        
         input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 18px; color: white; margin-bottom: 12px; outline: none; font-size: 16px; display: block; text-align: center; cursor: pointer; width: 100%; box-sizing: border-box; }
-        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; width: 100%; transition: 0.3s; }
-        .btn-post:disabled { background: #222; color: #555; cursor: not-allowed; box-shadow: none; }
-        
-        /* ЛОАДЕР */
+        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; }
+        .btn-post:disabled { background: #222; color: #555; }
         #loader { display: none; text-align: center; margin-top: 20px; color: var(--neon); font-weight: 700; }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-
     <img id="bg-gif" src="https://giphy.com">
     <div class="overlay"></div>
-
     <div class="nav"><div class="logo">cotakbass</div></div>
-
-    <div class="container" id="feed">
-        <p style="text-align:center; opacity:0.3; margin-top:50px;">подключаемся к облаку...</p>
-    </div>
-
+    <div class="container" id="feed"><p style="text-align:center; opacity:0.3; margin-top:50px;">подключение...</p></div>
     <button class="fab" onclick="toggleModal()">+</button>
 
     <div class="modal" id="postModal">
         <h2 style="text-align: center; margin-bottom: 30px;">Опубликовать</h2>
         <input type="text" id="trackTitle" placeholder="Название трека">
         <input type="text" id="userName" placeholder="Твой ник">
-        
-        <label class="file-label" for="fileInput" id="fileStatus">Выбрать файл (.mp3)</label>
-        <input type="file" id="fileInput" accept="audio/mpeg" style="display: none;" onchange="updateFileName()">
-        
-        <button class="btn-post" id="upBtn" onclick="handleUpload()" disabled>ЖДЕМ СОЕДИНЕНИЯ...</button>
-        
+        <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3</label>
+        <input type="file" id="fileInput" accept="audio/mpeg" style="display: none;" onchange="if(this.files) document.getElementById('fileStatus').innerText='Файл готов'">
+        <button class="btn-post" id="upBtn" onclick="handleUpload()" disabled>ПОДКЛЮЧЕНИЕ К БАЗЕ...</button>
         <div id="loader">ТРЕК ЛЕТИТ В ОБЛАКО...</div>
-
-        <p onclick="toggleModal()" id="cancelBtn" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
+        <p onclick="toggleModal()" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
     <script>
-        const SUPABASE_URL = "https://supabase.co";
-        const SUPABASE_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; 
+        const S_URL = "https://supabase.co";
+        const S_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; 
         let sb = null;
 
-        // 1. ПРОВЕРКА ПОДКЛЮЧЕНИЯ
-        const checkBase = setInterval(() => {
-            if (typeof supabase !== 'undefined') {
-                sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ПРОВЕРКА ЗАГРУЗКИ БИБЛИОТЕКИ
+        const check = setInterval(() => {
+            if (window.supabase) {
+                sb = window.supabase.createClient(S_URL, S_KEY);
                 document.getElementById('upBtn').innerText = "Опубликовать";
                 document.getElementById('upBtn').disabled = false;
                 loadFeed();
-                clearInterval(checkBase);
+                clearInterval(check);
             }
         }, 1000);
 
         function toggleModal() { document.getElementById('postModal').classList.toggle('active'); }
-        
-        function updateFileName() {
-            const f = document.getElementById('fileInput').files[0];
-            if(f) document.getElementById('fileStatus').innerText = "Выбрано: " + f.name.substring(0, 15) + "...";
-        }
 
         async function loadFeed() {
-            try {
-                const { data, error } = await sb.from('posts').select('*').order('id', { ascending: false });
-                const feed = document.getElementById('feed');
-                feed.innerHTML = "";
-                if (data) {
-                    data.forEach(item => {
-                        feed.innerHTML += `<div class="card"><span class="user-tag">By: ${item.author}</span><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
-                    });
-                }
-            } catch (e) { console.log("Feed error"); }
+            const { data } = await sb.from('posts').select('*').order('id', { ascending: false });
+            const feed = document.getElementById('feed');
+            feed.innerHTML = "";
+            if (data) {
+                data.forEach(item => {
+                    feed.innerHTML += `<div class="card"><span style="font-size:10px; color:var(--neon)">By: ${item.author}</span><h3>${item.title}</h3><audio controls src="${item.link}"></audio></div>`;
+                });
+            }
         }
 
         async function handleUpload() {
             const title = document.getElementById('trackTitle').value;
-            const author = document.getElementById('userName').value;
-            const file = document.getElementById('fileInput').files[0];
+            const user = document.getElementById('userName').value;
+            const file = document.getElementById('fileInput').files;
 
-            if (!title || !author || !file) return alert("Заполни всё!");
+            if (!title || !user || !file) return alert("Заполни поля!");
 
             document.getElementById('loader').style.display = 'block';
             document.getElementById('upBtn').style.display = 'none';
 
             try {
-                const fName = `${Date.now()}_track.mp3`;
-                
-                // ЗАГРУЗКА В ХРАНИЛИЩЕ
+                const fName = Date.now() + ".mp3";
                 const { error: upErr } = await sb.storage.from('music').upload(fName, file);
                 if (upErr) throw upErr;
-
-                // ПОЛУЧЕНИЕ ССЫЛКИ
                 const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(fName);
-                
-                // ЗАПИСЬ В ТАБЛИЦУ
-                const { error: dbErr } = await sb.from('posts').insert([{ title, author, link: publicUrl }]);
-                if (dbErr) throw dbErr;
-
+                await sb.from('posts').insert([{ title: title, author: user, link: publicUrl }]);
                 location.reload();
             } catch (err) {
                 alert("Ошибка: " + err.message);
