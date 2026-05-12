@@ -7,29 +7,29 @@
     <style>
         :root {
             --neon: #A020F0;
-            --glass: rgba(255, 255, 255, 0.04);
-            --border: rgba(160, 32, 240, 0.25);
-            --blur: blur(35px);
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(160, 32, 240, 0.3);
+            --blur: blur(45px);
         }
 
         body, html {
             margin: 0; padding: 0; background: #000;
-            color: white; font-family: -apple-system, sans-serif;
+            color: white; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent;
         }
 
         /* GIF ФОН */
-        #bg-canvas {
+        #bg-gif {
             position: fixed; inset: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: -2; opacity: 0.5;
-            transition: opacity 0.8s ease;
+            transition: opacity 1.5s ease-in-out;
         }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: -1; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: -1; }
 
         /* Навигация */
         .nav {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 1000;
+            padding: 20px 25px; position: fixed; width: calc(100% - 50px); top: 0; z-index: 1000;
         }
         .logo {
             font-size: 14px; font-weight: 700; letter-spacing: 5px; color: var(--neon);
@@ -38,196 +38,198 @@
         }
 
         /* Кнопки Liquid Glass */
-        .circle-btn {
+        .btn {
             width: 52px; height: 52px; border-radius: 50%;
             background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
             border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: white; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer; color: white; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .circle-btn:active { transform: scale(0.85); background: rgba(160, 32, 240, 0.15); }
+        .btn:active { transform: scale(0.9); box-shadow: 0 0 20px var(--neon); }
 
         /* Экраны */
         .screen {
             position: absolute; inset: 0; display: none; 
             flex-direction: column; padding: 110px 25px 25px;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(25px); z-index: 500;
         }
         .screen.active { display: flex; }
 
-        /* ПЛЕЕР */
-        .player-ui { text-align: left; margin-top: 12vh; transition: 0.5s; }
-        .t-title { font-size: 46px; font-weight: 800; letter-spacing: -2px; line-height: 1; margin-bottom: 10px; }
-        .t-author { font-size: 19px; color: var(--neon); font-weight: 300; margin-bottom: 50px; opacity: 0.9; }
+        /* Плеер */
+        .player-content { text-align: left; margin-top: 15vh; padding-left: 5%; }
+        .track-title { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1; margin-bottom: 10px; }
+        .track-author { font-size: 18px; color: var(--neon); font-weight: 300; margin-bottom: 60px; }
         .controls { display: flex; gap: 20px; }
-        .controls .circle-btn { width: 65px; height: 65px; font-size: 26px; }
+        .controls .btn { width: 65px; height: 65px; font-size: 24px; }
 
-        /* ПОИСК */
+        /* Поиск */
         .search-box {
             position: relative; width: 100%; background: var(--glass); 
             backdrop-filter: var(--blur); border: 1px solid var(--border);
-            border-radius: 22px; padding: 18px 20px; box-sizing: border-box;
+            border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; box-sizing: border-box;
         }
-        .search-box input {
-            background: none; border: none; color: white; width: 85%; font-size: 18px; outline: none;
-        }
-        .search-icon-inner { position: absolute; right: 20px; color: var(--neon); font-weight: 800; font-size: 20px; }
+        .search-box input { background: none; border: none; color: white; width: 100%; font-size: 18px; outline: none; }
+        .search-confirm { color: var(--neon); font-weight: 900; font-size: 20px; cursor: pointer; margin-left: 10px; }
 
-        /* СПИСКИ */
-        .list { margin-top: 30px; overflow-y: auto; max-height: 60vh; }
+        /* Списки */
+        .list { margin-top: 20px; overflow-y: auto; flex-grow: 1; }
         .item { padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
 
-        /* ПРОФИЛЬ */
-        .big-circle {
-            width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--neon);
-            background: var(--glass); margin: 0 auto; display: flex; 
-            justify-content: center; align-items: center; font-size: 50px; color: var(--neon);
-            box-shadow: 0 0 30px rgba(160, 32, 240, 0.2); overflow: hidden; position: relative;
+        /* Профиль */
+        .profile-circle {
+            width: 180px; height: 180px; border-radius: 50%;
+            border: 2px solid var(--neon); background: var(--glass);
+            margin: 15vh auto 0; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; position: relative; box-shadow: 0 0 30px rgba(160, 32, 240, 0.2);
         }
-        .big-circle img { width: 100%; height: 100%; object-fit: cover; }
-        .section-title { text-align: center; color: var(--neon); letter-spacing: 5px; font-size: 14px; margin-bottom: 40px; }
+        .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body>
 
-    <img id="bg-canvas" src="" alt="">
+    <img id="bg-gif" src="">
     <div class="overlay"></div>
 
     <div class="nav">
-        <div class="circle-btn" onclick="toggleScreen('library-screen')">☰</div>
+        <div class="btn" onclick="toggleScreen('lib-screen')">☰</div>
         <div class="logo">cotakbass</div>
-        <div style="display: flex; gap: 12px;">
-            <div class="circle-btn" onclick="toggleScreen('profile-screen')">👤</div>
-            <div class="circle-btn" onclick="toggleScreen('search-screen')">?</div>
+        <div style="display: flex; gap: 10px;">
+            <div class="btn" onclick="toggleScreen('prof-screen')">👤</div>
+            <div class="btn" onclick="toggleScreen('search-screen')">?</div>
         </div>
     </div>
 
     <!-- ПЛЕЕР -->
-    <div id="player-screen" class="active" style="padding: 110px 25px;">
-        <div class="player-ui">
-            <div id="display-title" class="t-title">Nightcrawler</div>
-            <div id="display-author" class="t-author">Travis Scott</div>
+    <div id="player-screen" style="display: flex; flex-direction: column; padding: 110px 25px;">
+        <div class="player-content">
+            <div id="track-title" class="track-title">Загрузка...</div>
+            <div id="track-author" class="track-author">проверяем файлы</div>
             <div class="controls">
-                <button class="circle-btn" onclick="prevTrack()">❮</button>
-                <button class="circle-btn" style="border-color: var(--neon);" onclick="togglePlay()" id="play-trigger">▶</button>
-                <button class="circle-btn" onclick="nextTrack()">❯</button>
+                <div class="btn" onclick="prev()">❮</div>
+                <div class="btn" id="play-btn" style="border-color: var(--neon)" onclick="playPause()">▶</div>
+                <div class="btn" onclick="next()">❯</div>
             </div>
         </div>
+    </div>
+
+    <!-- БИБЛИОТЕКА -->
+    <div id="lib-screen" class="screen">
+        <div class="logo" style="position: static; margin-bottom: 30px; text-align: center;">favorites</div>
+        <div class="list" id="fav-list"></div>
     </div>
 
     <!-- ПОИСК -->
     <div id="search-screen" class="screen">
         <div class="search-box">
             <input type="text" id="search-input" placeholder="напиши хуйню">
-            <span class="search-icon-inner">?</span>
+            <div class="search-confirm">?</div>
         </div>
-        <div class="list" id="search-results"></div>
-    </div>
-
-    <!-- БИБЛИОТЕКА -->
-    <div id="library-screen" class="screen">
-        <div class="section-title">favorites</div>
-        <div class="list" id="favorites-list"></div>
+        <div class="list" id="search-list"></div>
     </div>
 
     <!-- ПРОФИЛЬ -->
-    <div id="profile-screen" class="screen">
-        <div class="big-circle" id="ava-clickable">
-            <span id="plus-plus">+</span>
+    <div id="prof-screen" class="screen">
+        <div class="profile-circle" id="prof-btn">
+            <span id="plus">+</span>
             <img id="ava-img" style="display:none">
         </div>
-        <div class="section-title" style="margin-top:20px; opacity:0.6;">profile</div>
-        
-        <button class="circle-btn" style="width: auto; border-radius: 20px; padding: 0 20px; margin: 0 auto;" onclick="document.getElementById('track-up').click()">
-            Добавить трек для теста
-        </button>
+        <input type="file" id="file-up" style="display:none" accept="image/*">
     </div>
 
-    <input type="file" id="ava-up" style="display:none" accept="image/*">
-    <input type="file" id="track-up" style="display:none" accept="audio/mp3">
-
     <script>
-        let currentScreen = 'player-screen';
-        let isPlaying = false;
-        let playlist = [
-            {t: "Nightcrawler", a: "Travis Scott", s: "https://soundhelix.com"},
-            {t: "Starboy", a: "The Weeknd", s: "https://soundhelix.com"}
-        ];
-        let currentIndex = 0;
+        // === НАСТРОЙКИ ТВOEГО GITHUB ===
+        const USER = "ChocolateBorodca"; 
+        const REPO = "cotakbass_music"; 
+        // ===============================
+
+        let tracks = [], gifs = [], curIdx = 0, isPlaying = false, curScreen = 'player-screen';
         const audio = new Audio();
 
-        // ТВОИ GIF (Вставь сюда ссылки на свои гифки)
-        const gifs = [
-            "https://giphy.com",
-            "https://giphy.com"
-        ];
+        async function init() {
+            try {
+                // Читаем папку music
+                const mRes = await fetch(`https://github.com{USER}/${REPO}/contents/music`);
+                const mData = await mRes.json();
+                tracks = mData.filter(f => f.name.endsWith('.mp3')).map(f => ({
+                    name: f.name.replace('.mp3', ''),
+                    url: f.download_url
+                }));
 
-        function toggleScreen(id) {
-            if (currentScreen === id) {
-                showMain();
-            } else {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                document.getElementById('player-screen').style.display = 'none';
-                document.getElementById(id).classList.add('active');
-                currentScreen = id;
+                // Читаем папку bg
+                const bRes = await fetch(`https://github.com{USER}/${REPO}/contents/bg`);
+                const bData = await bRes.json();
+                gifs = bData.filter(f => f.name.endsWith('.gif')).map(f => f.download_url);
+                
+                if(tracks.length > 0) update();
+            } catch (e) { 
+                document.getElementById('track-title').innerText = "Ошибка";
+                document.getElementById('track-author').innerText = "Проверь папки на GitHub";
             }
         }
 
-        function showMain() {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('player-screen').style.display = 'flex';
-            currentScreen = 'player-screen';
+        function toggleScreen(id) {
+            const screen = document.getElementById(id);
+            if (curScreen === id) {
+                screen.classList.remove('active');
+                curScreen = 'player-screen';
+            } else {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                screen.classList.add('active');
+                curScreen = id;
+            }
         }
 
-        function updateUI() {
-            const track = playlist[currentIndex];
-            document.getElementById('display-title').innerText = track.t;
-            document.getElementById('display-author').innerText = track.a;
-            // Рандомный GIF
-            document.getElementById('bg-canvas').src = gifs[Math.floor(Math.random() * gifs.length)];
-            audio.src = track.s;
+        function update() {
+            const t = tracks[curIdx];
+            const [a, n] = t.name.includes(' - ') ? t.name.split(' - ') : ['Unknown', t.name];
+            document.getElementById('track-title').innerText = n || a;
+            document.getElementById('track-author').innerText = a;
+            
+            // Рандомный GIF из твоей папки bg
+            if(gifs.length > 0) {
+                document.getElementById('bg-gif').src = gifs[Math.floor(Math.random()*gifs.length)];
+            }
+            
+            audio.src = t.url;
             if(isPlaying) audio.play();
         }
 
-        function togglePlay() {
+        function playPause() {
             isPlaying = !isPlaying;
-            document.getElementById('play-trigger').innerText = isPlaying ? "Ⅱ" : "▶";
-            if(isPlaying) audio.play(); else audio.pause();
+            document.getElementById('play-btn').innerText = isPlaying ? "Ⅱ" : "▶";
+            isPlaying ? audio.play() : audio.pause();
         }
 
-        function nextTrack() {
-            currentIndex = (currentIndex + 1) % playlist.length;
-            updateUI();
-        }
+        function next() { curIdx = (curIdx + 1) % tracks.length; update(); }
+        function prev() { curIdx = (curIdx - 1 + tracks.length) % tracks.length; update(); }
 
-        function prevTrack() {
-            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
-            updateUI();
-        }
-
-        // Тестовая загрузка трека
-        document.getElementById('track-up').onchange = (e) => {
-            const file = e.target.files[0];
-            if(file) {
-                const url = URL.createObjectURL(file);
-                playlist.push({t: file.name.replace('.mp3',''), a: "Local User", s: url});
-                alert("Трек добавлен в конец очереди!");
-            }
+        // Поиск
+        document.getElementById('search-input').oninput = (e) => {
+            const v = e.target.value.toLowerCase();
+            const list = document.getElementById('search-list');
+            list.innerHTML = "";
+            tracks.filter(t => t.name.toLowerCase().includes(v)).forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `<div>${t.name}</div><div class="btn" style="width:40px; height:40px">▶</div>`;
+                div.onclick = () => { curIdx = tracks.indexOf(t); isPlaying = true; update(); toggleScreen('search-list'); };
+                list.appendChild(div);
+            });
         };
 
         // Аватарка
-        document.getElementById('ava-clickable').onclick = () => document.getElementById('ava-up').click();
-        document.getElementById('ava-up').onchange = (e) => {
+        document.getElementById('prof-btn').onclick = () => document.getElementById('file-up').click();
+        document.getElementById('file-up').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                document.getElementById('ava-img').src = ev.target.result;
-                document.getElementById('ava-img').style.display = 'block';
-                document.getElementById('plus-plus').style.display = 'none';
+                const img = document.getElementById('ava-img');
+                img.src = ev.target.result;
+                img.style.display = 'block';
+                document.getElementById('plus').style.display = 'none';
             };
             reader.readAsDataURL(e.target.files[0]);
         };
 
-        // Инициализация
-        updateUI();
+        init();
     </script>
 </body>
 </html>
