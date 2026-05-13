@@ -3,19 +3,23 @@ export default async function handler(req, res) {
 
     const { title, user, content, fileName } = req.body;
     const TOKEN = process.env.GITHUB_TOKEN; 
+    const USER = "ChocolateBorodca";
+    const REPO = "cotakbass_music";
 
     try {
-        // ИСПРАВЛЕНО: Добавлен знак $ перед каждой переменной в адресе ссылки!
-        const response = await fetch(`github.com{fileName}`, {
+        // Собираем ссылку через обычные плюсы, чтобы избежать ошибок парсинга
+        const targetUrl = "github.com" + USER + "/" + REPO + "/contents/music/" + fileName;
+
+        const response = await fetch(targetUrl, {
             method: 'PUT',
             headers: {
-                "Authorization": `token ${TOKEN}`,
+                "Authorization": "token " + TOKEN,
                 "Content-Type": "application/json",
                 "User-Agent": "Vercel-Serverless"
             },
             body: JSON.stringify({
-                message: `Upload track: ${title} by ${user}`,
-                content: content // Сюда прилетает чистый Base64 от твоего MP3
+                message: "Upload track: " + title + " by " + user,
+                content: content
             })
         });
 
