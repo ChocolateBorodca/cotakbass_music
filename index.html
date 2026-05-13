@@ -52,8 +52,10 @@
         async function loadGitHubMusic() {
             const feed = document.getElementById('feed');
             try {
-                // ИСПРАВЛЕНО: Добавлены знаки $ к переменным пути
-                const res = await fetch("allorigins.win" + encodeURIComponent(`github.com{USER}/${REPO}/contents/music`));
+                const proxy = "allorigins.win";
+                const target = encodeURIComponent("github.com" + USER + "/" + REPO + "/contents/music");
+                
+                const res = await fetch(proxy + target);
                 const json = await res.json();
                 const files = JSON.parse(json.contents);
 
@@ -65,7 +67,7 @@
 
                 files.filter(f => f.name.endsWith('.mp3')).forEach(file => {
                     const cleanName = file.name.replace('.mp3', '').replaceAll('_', ' ');
-                    const audioUrl = `jsdelivr.net{USER}/${REPO}@main/music/${encodeURIComponent(file.name)}`;
+                    const audioUrl = "jsdelivr.net" + USER + "/" + REPO + "@main/music/" + encodeURIComponent(file.name);
                     
                     const card = document.createElement('div');
                     card.className = 'card';
@@ -93,8 +95,8 @@
             const reader = new FileReader();
 
             reader.onload = async function (e) {
-                const base64Content = e.target.result.split(',')[1]; // Берем чистую строку данных без заголовков
-                const cleanFileName = `${user.trim()}_-_${title.trim()}`.replace(/\s+/g, '_') + '.mp3';
+                const base64Content = e.target.result.split(',')[1]; // Извлекаем чистые Base64 данные файла
+                const cleanFileName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
 
                 try {
                     const res = await fetch('/api/upload', {
