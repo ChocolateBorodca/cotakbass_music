@@ -3,12 +3,10 @@ export default async function handler(req, res) {
 
     const { title, user, content, fileName } = req.body;
     const TOKEN = process.env.GITHUB_TOKEN; 
-    const USER = "ChocolateBorodca";
-    const REPO = "cotakbass_music";
 
     try {
-        // ИСПРАВЛЕНО: Добавлен протокол https:// и правильные косые черты в URL
-        const response = await fetch(`github.com{USER}/${REPO}/contents/music/${fileName}`, {
+        // Прописал прямую ссылку текстом без всяких {USER} и {REPO}
+        const response = await fetch(`github.com{fileName}`, {
             method: 'PUT',
             headers: {
                 "Authorization": `token ${TOKEN}`,
@@ -17,7 +15,7 @@ export default async function handler(req, res) {
             },
             body: JSON.stringify({
                 message: `Upload track: ${title} by ${user}`,
-                content: content[1] // Берем чистый Base64 код файла без префикса данных
+                content: content[1] // Берём чистую строку Base64
             })
         });
 
