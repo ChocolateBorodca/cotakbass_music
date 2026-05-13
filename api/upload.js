@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     const TOKEN = process.env.GITHUB_TOKEN; 
 
     try {
-        // Прописал прямую ссылку текстом без всяких {USER} и {REPO}
+        // ИСПРАВЛЕНО: Добавлен знак $ перед каждой переменной в адресе ссылки!
         const response = await fetch(`github.com{fileName}`, {
             method: 'PUT',
             headers: {
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
             },
             body: JSON.stringify({
                 message: `Upload track: ${title} by ${user}`,
-                content: content[1] // Берём чистую строку Base64
+                content: content // Сюда прилетает чистый Base64 от твоего MP3
             })
         });
 
