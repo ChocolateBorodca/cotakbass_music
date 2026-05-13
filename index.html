@@ -6,76 +6,135 @@
     <title>cotakbass platform</title>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
-        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 50px; }
+        body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; overflow-x: hidden; }
         #bg-gif { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.3; }
         .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.7), #000); z-index: -1; }
         .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); backdrop-filter: var(--blur); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; }
         .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 10px var(--neon); text-transform: lowercase; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); transition: 0.3s; }
-        .card:hover { border-color: var(--neon); }
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); }
         .card h3 { margin: 0 0 8px 0; font-size: 20px; font-weight: 800; text-transform: lowercase; }
         .card span { font-size: 10px; color: var(--neon); opacity: 0.7; letter-spacing: 2px; display: block; margin-bottom: 10px; }
         audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1) hue-rotate(180deg); }
-        .info-box { background: rgba(160, 32, 240, 0.1); border: 1px solid var(--neon); padding: 15px; border-radius: 15px; font-size: 13px; margin-bottom: 20px; text-align: center; }
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 60px; border-radius: 20px; background: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 35px; color: white; cursor: pointer; z-index: 2000; border: none; font-weight: bold; }
+        .modal { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; padding: 60px 25px; z-index: 3000; }
+        .modal.active { display: flex; }
+        input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 18px; color: white; margin-bottom: 12px; outline: none; font-size: 16px; display: block; text-align: center; cursor: pointer; width: 100%; box-sizing: border-box; }
+        .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; }
+        #loader { display: none; text-align: center; margin-top: 20px; color: var(--neon); font-weight: 700; }
     </style>
 </head>
 <body>
 
-    <img id="bg-gif" src="https://giphy.com">
+    <img id="bg-gif" src="giphy.com">
     <div class="overlay"></div>
-
     <div class="nav"><div class="logo">cotakbass</div></div>
+    <div class="container" id="feed"><p style="text-align:center; opacity:0.3;">сканируем папку music...</p></div>
+    <button class="fab" onclick="toggleModal()">+</button>
 
-    <div class="container">
-        <div class="info-box">
-            Чтобы добавить трек, просто закинь его в папку <b>music</b> на GitHub. <br>Он появится здесь сам!
-        </div>
-        <div id="feed">
-            <p style="text-align:center; opacity:0.3;">сканируем папку music...</p>
-        </div>
+    <div class="modal" id="postModal">
+        <h2 style="text-align: center; margin-bottom: 30px;">Загрузить трек</h2>
+        <input type="text" id="tTitle" placeholder="Название трека">
+        <input type="text" id="uName" placeholder="Твой ник">
+        <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3</label>
+        <input type="file" id="fileInput" accept="audio/mpeg,audio/mp3" style="display: none;" onchange="if(this.files.length) document.getElementById('fileStatus').innerText='Файл выбран'">
+        <button class="btn-post" id="upBtn" onclick="handleUpload()">Опубликовать</button>
+        <div id="loader">ТРЕК ОТПРАВЛЯЕТСЯ В ОБЛАКО...</div>
+        <p onclick="toggleModal()" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
     <script>
         const USER = "ChocolateBorodca";
         const REPO = "cotakbass_music";
 
+        function toggleModal() { document.getElementById('postModal').classList.toggle('active'); }
+
         async function loadGitHubMusic() {
             const feed = document.getElementById('feed');
             try {
-                // Используем прокси AllOrigins чтобы GitHub API не заблочили
-                const proxy = "https://allorigins.win";
-                const target = encodeURIComponent(`https://github.com{USER}/${REPO}/contents/music`);
+                const proxy = "allorigins.win";
+                const target = encodeURIComponent(`github.com{USER}/${REPO}/contents/music`);
                 
                 const res = await fetch(proxy + target);
                 const json = await res.json();
                 const files = JSON.parse(json.contents);
 
                 feed.innerHTML = "";
-
-                if (!Array.isArray(files)) {
-                    feed.innerHTML = "<p style='text-align:center'>Папка music пуста или не найдена.</p>";
+                if (!Array.isArray(files) || files.length === 0) {
+                    feed.innerHTML = "<p style='text-align:center; opacity:0.3;'>Папка music пуста. Нажми +, чтобы добавить первый трек.</p>";
                     return;
                 }
 
                 files.filter(f => f.name.endsWith('.mp3')).forEach(file => {
-                    const trackName = file.name.replace('.mp3', '').replaceAll('_', ' ');
-                    // Прямая ссылка через CDN jsDelivr (летает в РФ)
-                    const audioUrl = `https://jsdelivr.net{USER}/${REPO}@main/music/${encodeURIComponent(file.name)}`;
+                    const cleanName = file.name.replace('.mp3', '').replaceAll('_', ' ');
+                    const audioUrl = `jsdelivr.net{USER}/${REPO}@main/music/${encodeURIComponent(file.name)}`;
                     
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.innerHTML = `
-                        <span>OFFICIAL RELEASE</span>
-                        <h3>${trackName}</h3>
+                        <span>PUBLIC TRACK</span>
+                        <h3>${cleanName}</h3>
                         <audio controls src="${audioUrl}"></audio>
                     `;
                     feed.appendChild(card);
                 });
+            } catch (e) { feed.innerHTML = "<p style='text-align:center'>Ошибка загрузки ленты. Обнови страницу.</p>"; }
+        }
 
-            } catch (e) {
-                feed.innerHTML = "<p style='text-align:center'>Ошибка связи с GitHub. Попробуй обновить страницу.</p>";
-            }
+        async function handleUpload() {
+            const title = document.getElementById('tTitle').value;
+            const user = document.getElementById('uName').value;
+            const fileInput = document.getElementById('fileInput');
+
+            if (!title || !user || !fileInput.files.length) return alert("Заполни все поля!");
+
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('upBtn').style.display = 'none';
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function (e) {
+                const base64Content = e.target.result.split(',')[1];
+                const cleanFileName = `${user.trim()}_-_${title.trim()}`.replace(/\s+/g, '_') + '.mp3';
+
+                try {
+                    // Безопасный запрос на наш скрытый Vercel API
+                    const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title: title,
+                            user: user,
+                            fileName: cleanFileName,
+                            content: base64Content
+                        })
+                    });
+
+                    if (res.ok) {
+                        setTimeout(() => {
+                            toggleModal();
+                            loadGitHubMusic();
+                            document.getElementById('trackTitle').value = "";
+                            document.getElementById('userName').value = "";
+                            fileInput.value = "";
+                            document.getElementById('fileStatus').innerText = "Выбрать MP3";
+                            document.getElementById('loader').style.display = 'none';
+                            document.getElementById('upBtn').style.display = 'block';
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        const errText = await res.json();
+                        throw new Error(errText.error || "Ошибка сервера");
+                    }
+                } catch (err) {
+                    alert("Ошибка публикации: " + err.message);
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('upBtn').style.display = 'block';
+                }
+            };
+
+            reader.readAsDataURL(file);
         }
 
         loadGitHubMusic();
