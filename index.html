@@ -44,13 +44,16 @@
     </div>
 
     <script>
+        const USER = "ChocolateBorodca";
+        const REPO = "cotakbass_music";
+
         function toggleModal() { document.getElementById('postModal').classList.toggle('active'); }
 
-        // Прямая ссылка через шлюз на твою папку без шаблонов
         async function loadGitHubMusic() {
             const feed = document.getElementById('feed');
             try {
-                const res = await fetch("allorigins.win" + encodeURIComponent("github.com"));
+                // ИСПРАВЛЕНО: Добавлены знаки $ к переменным пути
+                const res = await fetch("allorigins.win" + encodeURIComponent(`github.com{USER}/${REPO}/contents/music`));
                 const json = await res.json();
                 const files = JSON.parse(json.contents);
 
@@ -62,7 +65,7 @@
 
                 files.filter(f => f.name.endsWith('.mp3')).forEach(file => {
                     const cleanName = file.name.replace('.mp3', '').replaceAll('_', ' ');
-                    const audioUrl = `jsdelivr.net{encodeURIComponent(file.name)}`;
+                    const audioUrl = `jsdelivr.net{USER}/${REPO}@main/music/${encodeURIComponent(file.name)}`;
                     
                     const card = document.createElement('div');
                     card.className = 'card';
@@ -90,7 +93,7 @@
             const reader = new FileReader();
 
             reader.onload = async function (e) {
-                const base64Content = e.target.result.split(',');
+                const base64Content = e.target.result.split(',')[1]; // Берем чистую строку данных без заголовков
                 const cleanFileName = `${user.trim()}_-_${title.trim()}`.replace(/\s+/g, '_') + '.mp3';
 
                 try {
