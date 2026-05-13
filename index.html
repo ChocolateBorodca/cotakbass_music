@@ -26,7 +26,6 @@
 </head>
 <body>
 
-    <img id="bg-gif" src="giphy.com">
     <div class="overlay"></div>
     <div class="nav"><div class="logo">cotakbass</div></div>
     <div class="container" id="feed"><p style="text-align:center; opacity:0.3;">сканируем папку music...</p></div>
@@ -39,7 +38,7 @@
         <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3</label>
         <input type="file" id="fileInput" accept="audio/mpeg,audio/mp3" style="display: none;" onchange="if(this.files.length) document.getElementById('fileStatus').innerText='Файл выбран'">
         <button class="btn-post" id="upBtn" onclick="handleUpload()">Опубликовать</button>
-        <div id="loader">ТРЕК ОТПРАВЛЯЕТСЯ В ОБЛАКО...</div>
+        <div id="loader">ТРЕК ЛЕТИТ НА НАПРЯМУЮ В ХРАНИЛИЩЕ...</div>
         <p onclick="toggleModal()" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
@@ -52,22 +51,19 @@
         async function loadGitHubMusic() {
             const feed = document.getElementById('feed');
             try {
-                const proxy = "allorigins.win";
-                const target = encodeURIComponent("github.com" + USER + "/" + REPO + "/contents/music");
-                
-                const res = await fetch(proxy + target);
+                const res = await fetch("allorigins.win" + encodeURIComponent(`github.com{USER}/${REPO}/contents/music`));
                 const json = await res.json();
                 const files = JSON.parse(json.contents);
 
                 feed.innerHTML = "";
                 if (!Array.isArray(files) || files.length === 0) {
-                    feed.innerHTML = "<p style='text-align:center; opacity:0.3;'>Папка music пуста. Нажми +, чтобы добавить первый трек.</p>";
+                    feed.innerHTML = "<p style='text-align:center; opacity:0.3;'>Лента пуста. Нажми +, чтобы загрузить первый трек.</p>";
                     return;
                 }
 
                 files.filter(f => f.name.endsWith('.mp3')).forEach(file => {
                     const cleanName = file.name.replace('.mp3', '').replaceAll('_', ' ');
-                    const audioUrl = "jsdelivr.net" + USER + "/" + REPO + "@main/music/" + encodeURIComponent(file.name);
+                    const audioUrl = `jsdelivr.net{USER}/${REPO}@main/music/${encodeURIComponent(file.name)}`;
                     
                     const card = document.createElement('div');
                     card.className = 'card';
@@ -95,22 +91,35 @@
             const reader = new FileReader();
 
             reader.onload = async function (e) {
-                const base64Content = e.target.result.split(',')[1]; // Извлекаем чистые Base64 данные файла
+                // Извлекаем чистый код base64
+                const base64Content = e.target.result.split(',')[1];
                 const cleanFileName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
 
                 try {
-                    const res = await fetch('/api/upload', {
+                    // 1. Получаем безопасную ссылку и токен от сервера
+                    const tokenRes = await fetch('/api/upload', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, user, fileName: cleanFileName })
+                    });
+                    
+                    const tokenData = await tokenRes.json();
+                    if (!tokenRes.ok) throw new Error(tokenData.error || "Ошибка авторизации");
+
+                    // 2. Браузер сам отправляет тяжелый файл в обход сервера Vercel
+                    const gitHubRes = await fetch(tokenData.uploadUrl, {
+                        method: 'PUT',
+                        headers: {
+                            "Authorization": "token " + tokenData.token,
+                            "Content-Type": "application/json"
+                        },
                         body: JSON.stringify({
-                            title: title,
-                            user: user,
-                            fileName: cleanFileName,
+                            message: tokenData.message,
                             content: base64Content
                         })
                     });
 
-                    if (res.ok) {
+                    if (gitHubRes.ok) {
                         setTimeout(() => {
                             toggleModal();
                             loadGitHubMusic();
@@ -121,10 +130,9 @@
                             document.getElementById('loader').style.display = 'none';
                             document.getElementById('upBtn').style.display = 'block';
                             location.reload();
-                        }, 2000);
+                        }, 1500);
                     } else {
-                        const errText = await res.json();
-                        throw new Error(errText.error || "Ошибка сервера");
+                        throw new Error("GitHub отклонил тяжелый файл.");
                     }
                 } catch (err) {
                     alert("Ошибка публикации: " + err.message);
