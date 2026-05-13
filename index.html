@@ -95,11 +95,10 @@
             const reader = new FileReader();
 
             reader.onload = async function (e) {
-                const base64Content = e.target.result.split(',')[1];
+                const base64Content = e.target.result.split(',');
                 const cleanFileName = `${user.trim()}_-_${title.trim()}`.replace(/\s+/g, '_') + '.mp3';
 
                 try {
-                    // Безопасный запрос на наш скрытый Vercel API
                     const res = await fetch('/api/upload', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
