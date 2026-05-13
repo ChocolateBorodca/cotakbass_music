@@ -12,7 +12,7 @@
         .nav { padding: 25px; border-bottom: 1px solid rgba(160, 32, 240, 0.2); backdrop-filter: var(--blur); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; }
         .logo { font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--neon); text-shadow: 0 0 10px var(--neon); text-transform: lowercase; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); }
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 20px; margin-bottom: 20px; backdrop-filter: var(--blur); animation: slideUp 0.5s ease; }
         .card h3 { margin: 0 0 8px 0; font-size: 20px; font-weight: 800; text-transform: lowercase; }
         .card span { font-size: 10px; color: var(--neon); opacity: 0.7; letter-spacing: 2px; display: block; margin-bottom: 10px; }
         audio { width: 100%; height: 40px; border-radius: 12px; filter: invert(1) hue-rotate(180deg); }
@@ -22,6 +22,7 @@
         input, .file-label { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 18px; color: white; margin-bottom: 12px; outline: none; font-size: 16px; display: block; text-align: center; cursor: pointer; width: 100%; box-sizing: border-box; }
         .btn-post { background: var(--neon); color: white; padding: 20px; border-radius: 18px; text-align: center; font-weight: 800; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; }
         #loader { display: none; text-align: center; margin-top: 20px; color: var(--neon); font-weight: 700; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -38,7 +39,7 @@
         <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3</label>
         <input type="file" id="fileInput" accept="audio/mpeg,audio/mp3" style="display: none;" onchange="if(this.files.length) document.getElementById('fileStatus').innerText='Файл выбран'">
         <button class="btn-post" id="upBtn" onclick="handleUpload()">Опубликовать</button>
-        <div id="loader">ТРЕК ЛЕТИТ НА НАПРЯМУЮ В ХРАНИЛИЩЕ...</div>
+        <div id="loader">ТРЕК ЛЕТИТ НАПРЯМУЮ В ХРАНИЛИЩЕ...</div>
         <p onclick="toggleModal()" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
@@ -64,17 +65,25 @@
                 files.filter(f => f.name.endsWith('.mp3')).forEach(file => {
                     const cleanName = file.name.replace('.mp3', '').replaceAll('_', ' ');
                     const audioUrl = `jsdelivr.net{USER}/${REPO}@main/music/${encodeURIComponent(file.name)}`;
-                    
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <span>PUBLIC TRACK</span>
-                        <h3>${cleanName}</h3>
-                        <audio controls src="${audioUrl}"></audio>
-                    `;
-                    feed.appendChild(card);
+                    addTrackToUI(cleanName, audioUrl, false);
                 });
             } catch (e) { feed.innerHTML = "<p style='text-align:center'>Ошибка загрузки ленты. Обнови страницу.</p>"; }
+        }
+
+        function addTrackToUI(name, url, toTop = false) {
+            const feed = document.getElementById('feed');
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <span>PUBLIC RELEASE</span>
+                <h3>${name}</h3>
+                <audio controls src="${url}"></audio>
+            `;
+            if (toTop && feed.firstChild) {
+                feed.insertBefore(card, feed.firstChild);
+            } else {
+                feed.appendChild(card);
+            }
         }
 
         async function handleUpload() {
@@ -91,12 +100,10 @@
             const reader = new FileReader();
 
             reader.onload = async function (e) {
-                // Извлекаем чистый код base64
-                const base64Content = e.target.result.split(',')[1];
+                const base64Content = e.target.result.split(',')[1]; // Фикс: берем только чистую строку Base64
                 const cleanFileName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
 
                 try {
-                    // 1. Получаем безопасную ссылку и токен от сервера
                     const tokenRes = await fetch('/api/upload', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -106,7 +113,6 @@
                     const tokenData = await tokenRes.json();
                     if (!tokenRes.ok) throw new Error(tokenData.error || "Ошибка авторизации");
 
-                    // 2. Браузер сам отправляет тяжелый файл в обход сервера Vercel
                     const gitHubRes = await fetch(tokenData.uploadUrl, {
                         method: 'PUT',
                         headers: {
@@ -120,17 +126,24 @@
                     });
 
                     if (gitHubRes.ok) {
-                        setTimeout(() => {
-                            toggleModal();
-                            loadGitHubMusic();
-                            document.getElementById('trackTitle').value = "";
-                            document.getElementById('userName').value = "";
-                            fileInput.value = "";
-                            document.getElementById('fileStatus').innerText = "Выбрать MP3";
-                            document.getElementById('loader').style.display = 'none';
-                            document.getElementById('upBtn').style.display = 'block';
-                            location.reload();
-                        }, 1500);
+                        // ХАК: Вместо перезагрузки страницы мгновенно создаем плеер локально!
+                        const localAudioUrl = URL.createObjectURL(file); 
+                        const displayName = `${user} - ${title}`;
+                        
+                        // Удаляем надпись о пустой ленте, если она есть
+                        const feed = document.getElementById('feed');
+                        if (feed.innerText.includes("Лента пуста")) feed.innerHTML = "";
+
+                        addTrackToUI(displayName, localAudioUrl, true);
+
+                        // Закрываем модалку и сбрасываем форму
+                        toggleModal();
+                        document.getElementById('trackTitle').value = "";
+                        document.getElementById('userName').value = "";
+                        fileInput.value = "";
+                        document.getElementById('fileStatus').innerText = "Выбрать MP3";
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('upBtn').style.display = 'block';
                     } else {
                         throw new Error("GitHub отклонил тяжелый файл.");
                     }
