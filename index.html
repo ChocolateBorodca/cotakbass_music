@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
+    <!-- Подключаем легкий официальный скрипт загрузки Vercel Blob -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
         body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; overflow-x: hidden; }
@@ -38,7 +40,7 @@
         <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3 из галереи</label>
         <input type="file" id="fileInput" accept="audio/mpeg,audio/mp3" style="display: none;" onchange="if(this.files.length) document.getElementById('fileStatus').innerText='Файл выбран'">
         <button class="btn-post" id="upBtn" onclick="handleUpload()">Опубликовать</button>
-        <div id="loader">ТРЕК ОТПРАВЛЯЕТСЯ В ОБЛАКО VERCEL...</div>
+        <div id="loader">ТРЕК ЛЕТИТ НАПРЯМУЮ В ОБЛАКО...</div>
         <p onclick="document.getElementById('postModal').classList.remove('active')" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
@@ -78,21 +80,20 @@
             document.getElementById('loader').style.display = 'block';
             document.getElementById('upBtn').style.display = 'none';
 
-            // ИСПРАВЛЕНО: Добавлен индекс [0] для выбора конкретного файла из галереи
             const file = fileInput.files[0];
             const cleanName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
 
             try {
-                const res = await fetch('/api/upload?fileName=' + cleanName, {
-                    method: 'POST',
-                    body: file,
-                    headers: { 'Content-Type': file.type }
+                // 1. Загружаем напрямую в Vercel Blob, используя официальный клиентский метод библиотеки
+                const newBlob = await vercelBlob.upload('music/' + cleanName, file, {
+                    access: 'public',
+                    handleUploadUrl: '/api/upload', // Шлюз, который выдаст одноразовый токен доступа
                 });
 
-                if (res.ok) {
+                if (newBlob && newBlob.url) {
                     location.reload();
                 } else {
-                    throw new Error("Ошибка загрузки в Vercel Blob");
+                    throw new Error("Не удалось получить ссылку на файл");
                 }
             } catch (err) {
                 alert("Ошибка публикации: " + err.message);
