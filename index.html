@@ -78,11 +78,11 @@
             document.getElementById('loader').style.display = 'block';
             document.getElementById('upBtn').style.display = 'none';
 
+            // ИСПРАВЛЕНО: Добавлен индекс [0] для выбора конкретного файла из галереи
             const file = fileInput.files[0];
             const cleanName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
 
             try {
-                // Отправляем чистый бинарный поток без Base64 сжатия
                 const res = await fetch('/api/upload?fileName=' + cleanName, {
                     method: 'POST',
                     body: file,
