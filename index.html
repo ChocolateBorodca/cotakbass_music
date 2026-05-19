@@ -38,11 +38,14 @@
         <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3 из галереи</label>
         <input type="file" id="fileInput" accept="audio/mpeg,audio/mp3" style="display: none;" onchange="if(this.files.length) document.getElementById('fileStatus').innerText='Файл выбран'">
         <button class="btn-post" id="upBtn" onclick="handleUpload()">Опубликовать</button>
-        <div id="loader">ТРЕК ЛЕТИТ НАПРЯМУЮ В ОБЛАКО...</div>
+        <div id="loader">ТРЕК ЛЕТИТ НАПРЯМУЮ В ОБЛАКО VERCEL...</div>
         <p onclick="document.getElementById('postModal').classList.remove('active')" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
-    <script>
+    <script type="module">
+        // Импортируем чистый загрузчик напрямую со стандартных серверов Vercel
+        import { upload } from 'https://jsdelivr.net';
+
         async function loadFeed() {
             const feed = document.getElementById('feed');
             try {
@@ -68,7 +71,7 @@
             } catch (e) { feed.innerHTML = "<p style='text-align:center; opacity:0.3; margin-top:50px;'>Нажми +, чтобы загрузить первый трек</p>"; }
         }
 
-        async function handleUpload() {
+        window.handleUpload = async function() {
             const title = document.getElementById('tTitle').value;
             const user = document.getElementById('uName').value;
             const fileInput = document.getElementById('fileInput');
@@ -78,36 +81,21 @@
             document.getElementById('loader').style.display = 'block';
             document.getElementById('upBtn').style.display = 'none';
 
-            // ИСПРАВЛЕНО: Четко берем первый файл из галереи
-            const file = fileInput.files[0]; 
+            // ИСПРАВЛЕНО НАМЕРТВО: Берём один конкретный бинарный файл трека [0]
+            const file = fileInput.files[0];
             const cleanName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
 
             try {
-                // 1. Получаем секретный одноразовый пропуск от нашего сервера
-                const tokenRes = await fetch('/api/upload', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fileName: cleanName })
-                });
-                
-                const tokenData = await tokenRes.json();
-                if (!tokenRes.ok) throw new Error(tokenData.error || "Ошибка токена");
-
-                // 2. Отправляем файл напрямую в облако Vercel Blob
-                const uploadRes = await fetch('https://vercel-storage.com' + cleanName, {
-                    method: 'POST',
-                    body: file,
-                    headers: {
-                        'x-api-version': 'v1',
-                        'Authorization': 'Bearer ' + tokenData.clientToken
-                    }
+                // Загружаем файл напрямую в облако Vercel Blob одной строчкой!
+                const newBlob = await upload('music/' + cleanName, file, {
+                    access: 'public',
+                    handleUploadUrl: '/api/upload'
                 });
 
-                if (uploadRes.ok) {
+                if (newBlob && newBlob.url) {
                     location.reload();
                 } else {
-                    const errData = await uploadRes.json();
-                    throw new Error(errData.error?.message || "Облако отклонило загрузку");
+                    throw new Error("Не удалось получить ссылку на файл");
                 }
             } catch (err) {
                 alert("Ошибка публикации: " + err.message);
