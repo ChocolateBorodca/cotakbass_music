@@ -38,7 +38,7 @@
         <input type="text" id="tTitle" placeholder="Название трека">
         <input type="text" id="uName" placeholder="Твой ник">
         <label class="file-label" for="fileInput" id="fileStatus">Выбрать MP3 из галереи</label>
-        <input type="file" id="fileInput" accept="audio/mpeg,audio/mp3" style="display: none;" onchange="if(this.files.length) document.getElementById('fileStatus').innerText='Файл выбран'">
+        <input type="file" id="fileInput" accept="audio/mpeg,audio/mp3" style="display: none;" onchange="onFileSelected()">
         
         <button class="btn-post" id="upBtn" onclick="handleUpload()">Опубликовать</button>
         
@@ -54,9 +54,18 @@
         import { upload } from 'https://jsdelivr.net';
 
         let isUploading = false;
+        let savedFile = null; // Переменная для хранения файла в памяти сайта
 
         window.toggleCancel = function() {
             if (!isUploading) document.getElementById('postModal').classList.remove('active');
+        }
+
+        window.onFileSelected = function() {
+            const fileInput = document.getElementById('fileInput');
+            if(fileInput.files.length > 0) {
+                savedFile = fileInput.files[0]; // Запоминаем файл внутри сайта
+                document.getElementById('fileStatus').innerText = "Файл готов: " + savedFile.name.substring(0, 15) + "...";
+            }
         }
 
         async function loadFeed() {
@@ -84,7 +93,7 @@
             } catch (e) { feed.innerHTML = "<p style='text-align:center; opacity:0.3; margin-top:50px;'>Нажми +, чтобы загрузить первый трек</p>"; }
         }
 
-        function resetForm() {
+        function unlockInterface() {
             isUploading = false;
             document.getElementById('loader').style.display = 'none';
             document.getElementById('upBtn').style.display = 'block';
@@ -94,43 +103,31 @@
         window.handleUpload = async function() {
             const title = document.getElementById('tTitle').value;
             const user = document.getElementById('uName').value;
-            const fileInput = document.getElementById('fileInput');
 
-            if (!title || !user || !fileInput.files.length) return alert("Заполни все поля!");
+            // Проверяем сохраненный файл, а не инпут
+            if (!title || !user || !savedFile) return alert("Заполни все поля и выбери файл!");
 
             isUploading = true;
             document.getElementById('loader').style.display = 'block';
             document.getElementById('upBtn').style.display = 'none';
             document.getElementById('cancelBtn').style.opacity = '0.1';
 
-            const file = fileInput.files; 
             const cleanName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
 
-            // Тайм-аут защиты: если загрузка висит дольше 20 секунд, принудительно сбрасываем затык
-            const safetyTimeout = setTimeout(() => {
-                if (isUploading) {
-                    alert("Загрузка заняла слишком много времени. Проверь скорость интернета.");
-                    resetForm();
-                }
-            }, 20000);
-
             try {
-                const newBlob = await upload('music/' + cleanName, file, {
+                const newBlob = await upload('music/' + cleanName, savedFile, {
                     access: 'public',
                     handleUploadUrl: '/api/upload'
                 });
 
-                clearTimeout(safetyTimeout);
-
                 if (newBlob && newBlob.url) {
                     location.reload();
                 } else {
-                    throw new Error("Не удалось получить ссылку на файл");
+                    throw new Error("Сервер вернул пустой ответ");
                 }
             } catch (err) {
-                clearTimeout(safetyTimeout);
-                alert("Ошибка публикации: " + err.message);
-                resetForm();
+                alert("Связь оборвалась. Файл сохранен в памяти, просто нажмите 'Опубликовать' еще раз.");
+                unlockInterface(); // Возвращаем кнопку в рабочее состояние
             }
         }
 
