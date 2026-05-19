@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
-    <!-- Подключаем легкий официальный скрипт загрузки Vercel Blob -->
-    <script src="https://jsdelivr.net"></script>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
         body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; overflow-x: hidden; }
@@ -80,20 +78,35 @@
             document.getElementById('loader').style.display = 'block';
             document.getElementById('upBtn').style.display = 'none';
 
-            const file = fileInput.files[0];
+            const file = fileInput.files[0]; // Берем чистый файл
             const cleanName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
 
             try {
-                // 1. Загружаем напрямую в Vercel Blob, используя официальный клиентский метод библиотеки
-                const newBlob = await vercelBlob.upload('music/' + cleanName, file, {
-                    access: 'public',
-                    handleUploadUrl: '/api/upload', // Шлюз, который выдаст одноразовый токен доступа
+                // 1. Запрашиваем у нашего сервера одноразовый токен доступа
+                const tokenRes = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName: cleanName })
+                });
+                
+                const tokenData = await tokenRes.json();
+                if (!tokenRes.ok) throw new Error(tokenData.error || "Ошибка токена");
+
+                // 2. Железобетонный метод: грузим файл через системный fetch браузера напрямую по адресу Vercel Storage
+                const uploadRes = await fetch('https://vercel-storage.com' + cleanName, {
+                    method: 'POST',
+                    body: file,
+                    headers: {
+                        'x-api-version': 'v1',
+                        'Authorization': 'Bearer ' + tokenData.clientToken
+                    }
                 });
 
-                if (newBlob && newBlob.url) {
+                if (uploadRes.ok) {
                     location.reload();
                 } else {
-                    throw new Error("Не удалось получить ссылку на файл");
+                    const errData = await uploadRes.json();
+                    throw new Error(errData.error?.message || "Облако отклонило бинарный поток");
                 }
             } catch (err) {
                 alert("Ошибка публикации: " + err.message);
