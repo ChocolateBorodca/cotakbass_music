@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cotakbass platform</title>
+    <!-- ЗАГРУЖАЕМ БАЗУ ЧЕРЕЗ СТАБИЛЬНЫЙ CDN CLOUDFLARE -->
+    <script src="https://cloudflare.com"></script>
     <style>
         :root { --neon: #A020F0; --glass: rgba(255, 255, 255, 0.05); --blur: blur(45px); }
         body { margin: 0; background: #000; color: white; font-family: -apple-system, sans-serif; padding-bottom: 100px; overflow-x: hidden; }
@@ -27,9 +29,7 @@
 <body>
 
     <div class="nav"><div class="logo">cotakbass</div></div>
-    <div class="container" id="feed">
-        <p style="text-align:center; opacity:0.3; margin-top:50px;">Загрузка треков...</p>
-    </div>
+    <div class="container" id="feed"><p style="text-align:center; opacity:0.3; margin-top:50px;">Подключение к платформе...</p></div>
     
     <button class="fab" onclick="document.getElementById('postModal').classList.add('active')">+</button>
 
@@ -43,95 +43,91 @@
         <button class="btn-post" id="upBtn" onclick="handleUpload()">Опубликовать</button>
         
         <div id="loader">
-            <div id="loadText">ОТПРАВЛЯЕМ MP3 В ОБЛАКО...</div>
+            <div id="loadText">ТРЕК ЗАГРУЖАЕТСЯ В ОБЛАКО...</div>
             <div class="spinner"></div>
         </div>
         
-        <p onclick="toggleCancel()" id="cancelBtn" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
+        <p onclick="document.getElementById('postModal').classList.remove('active')" id="cancelBtn" style="text-align: center; margin-top: 30px; opacity: 0.4; cursor: pointer;">Отмена</p>
     </div>
 
-    <script type="module">
-        import { upload } from 'https://jsdelivr.net';
+    <script>
+        const S_URL = "https://supabase.co";
+        const S_KEY = "sb_publishable_YnpxQyq_9cv80tgAYgOjg_u6eYV1rCq2R4x-8IqSNCG-rLh-N68f_L5QJz6nQY_2S5U4v5p_Vv"; 
+        let sb = null;
+        let savedFile = null;
 
-        let isUploading = false;
-        let savedFile = null; // Переменная для хранения файла в памяти сайта
+        // Инициализация пульта управления базой данных
+        const checkBase = setInterval(() => {
+            if (window.supabase) {
+                sb = window.supabase.createClient(S_URL, S_KEY);
+                loadFeed();
+                clearInterval(checkBase);
+            }
+        }, 500);
 
-        window.toggleCancel = function() {
-            if (!isUploading) document.getElementById('postModal').classList.remove('active');
-        }
-
-        window.onFileSelected = function() {
+        function onFileSelected() {
             const fileInput = document.getElementById('fileInput');
             if(fileInput.files.length > 0) {
-                savedFile = fileInput.files[0]; // Запоминаем файл внутри сайта
-                document.getElementById('fileStatus').innerText = "Файл готов: " + savedFile.name.substring(0, 15) + "...";
+                // ИСПРАВЛЕНО: Достаем конкретный первый файл из списка
+                savedFile = fileInput.files[0]; 
+                // ИСПРАВЛЕНО: Безопасно обрезаем имя для красивого статуса кнопки
+                const displayFileName = savedFile.name.length > 15 ? savedFile.name.substring(0, 15) + "..." : savedFile.name;
+                document.getElementById('fileStatus').innerText = "Файл выбран: " + displayFileName;
             }
         }
 
         async function loadFeed() {
             const feed = document.getElementById('feed');
             try {
-                const res = await fetch('/api/list'); 
-                const data = await res.json();
-                
+                const { data } = await sb.from('posts').select('*').order('id', { ascending: false });
                 feed.innerHTML = "";
-                if(!data.blobs || data.blobs.length === 0) {
+                if(!data || data.length === 0) {
                     feed.innerHTML = "<p style='text-align:center; opacity:0.3; margin-top:50px;'>Лента пуста. Добавь первый трек!</p>";
                     return;
                 }
-
-                data.blobs.forEach(blob => {
-                    const nameParts = blob.pathname.replace('music/', '').replace('.mp3', '').replaceAll('_', ' ');
+                data.forEach(item => {
                     feed.innerHTML += `
                         <div class="card">
                             <span>RELEASE FROM GALLERY</span>
-                            <h3>${nameParts.toLowerCase()}</h3>
-                            <audio controls src="${blob.url}"></audio>
+                            <h3>${item.title.toLowerCase()}</h3>
+                            <audio controls src="${item.link}"></audio>
                         </div>
                     `;
                 });
-            } catch (e) { feed.innerHTML = "<p style='text-align:center; opacity:0.3; margin-top:50px;'>Нажми +, чтобы загрузить первый трек</p>"; }
+            } catch (e) { feed.innerHTML = "<p style='text-align:center; opacity:0.3; margin-top:50px;'>Нажми +, чтобы загрузить трек</p>"; }
         }
 
-        function unlockInterface() {
-            isUploading = false;
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('upBtn').style.display = 'block';
-            document.getElementById('cancelBtn').style.opacity = '0.4';
-        }
-
-        window.handleUpload = async function() {
+        async function handleUpload() {
             const title = document.getElementById('tTitle').value;
             const user = document.getElementById('uName').value;
 
-            // Проверяем сохраненный файл, а не инпут
             if (!title || !user || !savedFile) return alert("Заполни все поля и выбери файл!");
 
-            isUploading = true;
             document.getElementById('loader').style.display = 'block';
             document.getElementById('upBtn').style.display = 'none';
-            document.getElementById('cancelBtn').style.opacity = '0.1';
 
-            const cleanName = (user.trim() + "_-_" + title.trim()).replace(/\s+/g, '_') + '.mp3';
+            // Генерируем чистое имя файла без спецсимволов
+            const cleanFileName = Date.now() + "_" + savedFile.name.replace(/[^a-z0-9.]/gi, '_');
 
             try {
-                const newBlob = await upload('music/' + cleanName, savedFile, {
-                    access: 'public',
-                    handleUploadUrl: '/api/upload'
-                });
+                // 1. Загружаем бинарный поток напрямую со смартфона в бакет music
+                const { error: upErr } = await sb.storage.from('music').upload(cleanFileName, savedFile);
+                if (upErr) throw upErr;
 
-                if (newBlob && newBlob.url) {
-                    location.reload();
-                } else {
-                    throw new Error("Сервер вернул пустой ответ");
-                }
+                // 2. Получаем прямую публичную ссылку
+                const { data: { publicUrl } } = sb.storage.from('music').getPublicUrl(cleanFileName);
+
+                // 3. Записываем информацию в таблицу базы posts
+                const { error: dbErr } = await sb.from('posts').insert([{ title: user + " - " + title, author: user, link: publicUrl }]);
+                if (dbErr) throw dbErr;
+
+                location.reload();
             } catch (err) {
-                alert("Связь оборвалась. Файл сохранен в памяти, просто нажмите 'Опубликовать' еще раз.");
-                unlockInterface(); // Возвращаем кнопку в рабочее состояние
+                alert("Ошибка публикации: " + err.message + ". Попробуй еще раз.");
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('upBtn').style.display = 'block';
             }
         }
-
-        loadFeed();
     </script>
 </body>
 </html>
